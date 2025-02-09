@@ -1,0 +1,21 @@
+---
+# The level of loggin output
+logLevel: info
+
+valkey:
+  # The virtual address used by keepalived.
+  virtualAddress: ""
+  # (Optional) The port where all valkey instances are listening.
+  # Defaults to 6379.
+  port: 6379
+  # The individual addresses of the nodes.
+  nodes:
+    - "node1"
+    - "node2"
+  # (Optional) The username for logging into valkey
+  username: ""
+  # (Optional) The password for logging into valkey
+  password: ""
+  # (Optional) If the valkey instance uses ssl
+  # Defaults to false.
+  tls: false

@@ -1,0 +1,13 @@
+---
+run:
+  timeout: 1m
+  tests: true
+  modules-download-mode: readonly
+output:
+  formats:
+    - format: "colored-line-number"
+      path: stdout
+  print-issued-lines: true
+  print-linter-name: true
+issues:
+  uniq-by-line: true

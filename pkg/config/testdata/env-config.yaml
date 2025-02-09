@@ -1,0 +1,11 @@
+---
+logLevel: debug
+valkey:
+  virtualAddress: "10.8.0.10"
+  port: 6380
+  nodes:
+    - "10.8.0.11"
+    - "10.8.0.12"
+  username: ${TESTUSERNAME}
+  password: ${TESTPASSWORD}
+  tls: true
