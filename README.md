@@ -14,6 +14,7 @@ Does not ensure data integrity and can lead to split brain.
 
 - [valkey-keepalived](#valkey-keepalived)
   - [Table of Contents](#table-of-contents)
+  - [How does it work](#how-does-it-work)
   - [Container Images](#container-images)
     - [Image location](#image-location)
     - [Tags](#tags)
@@ -21,6 +22,16 @@ Does not ensure data integrity and can lead to split brain.
   - [Examples](#examples)
   - [What am i using it for](#what-am-i-using-it-for)
   - [Liability and warranty](#liability-and-warranty)
+
+## How does it work
+
+The failover is facilitaded through a simple method:
+1. Check all the nodes if they are up and retrieve their unique "run_id"
+2. Check the "run_id" for the valkey instance behind the keepalived IP
+3. Promote that valkey instance to master
+4. Ensure all other nodes are slaves of the new master
+
+Since the answer to which valkey instance is behind the keepalived IP does not change, it does not matter how many instances of valkey-keepalived are doing this, as the result should always be the same.
 
 ## Container Images
 
