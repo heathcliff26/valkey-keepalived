@@ -13,6 +13,7 @@ func newValkeyClient(addr string, port int64, option valkey.ClientOption) (valke
 	return valkey.NewClient(option)
 }
 
+// Takes a given info result from valkey and extracts the wanted value
 func ParseValueFromInfo(info string, key string) string {
 	fields := strings.Split(info, "\r\n")
 

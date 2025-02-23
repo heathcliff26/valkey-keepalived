@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alicebob/miniredis/v2"
 	testutils "github.com/heathcliff26/valkey-keepalived/tests/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/valkey-io/valkey-go"
 )
 
 const (
@@ -134,6 +136,37 @@ func TestReplication(t *testing.T) {
 		if !ok {
 			t.FailNow()
 		}
+	}
+}
+
+func TestClientClose(t *testing.T) {
+	assert := assert.New(t)
+
+	nodes := make([]*node, 3)
+	for i := range nodes {
+		mr := miniredis.RunT(t)
+		opt := valkey.ClientOption{
+			InitAddress:  []string{mr.Addr()},
+			DisableCache: true,
+			DisableRetry: true,
+		}
+		client, err := valkey.NewClient(opt)
+		if !assert.NoError(err, "Should create valkey client") {
+			t.FailNow()
+		}
+		nodes[i] = &node{
+			client: client,
+		}
+	}
+
+	c := &FailoverClient{
+		nodes: nodes,
+	}
+
+	c.Close()
+
+	for i, n := range c.nodes {
+		assert.Nilf(n.client, "Node %d should have closed the client", i)
 	}
 }
 

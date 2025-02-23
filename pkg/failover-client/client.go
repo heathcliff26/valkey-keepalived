@@ -24,6 +24,7 @@ type FailoverClient struct {
 	quit chan os.Signal
 }
 
+// Create a new failover client from the given configuration
 func NewFailoverClient(cfg ValkeyConfig) *FailoverClient {
 	option := valkey.ClientOption{
 		Username:     cfg.Username,
@@ -54,6 +55,7 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient {
 	}
 }
 
+// Run the given function on all nodes in parallel and wait
 func (c *FailoverClient) parallelJob(timeout time.Duration, f func(context.Context, *node)) {
 	var wg sync.WaitGroup
 
@@ -73,6 +75,7 @@ func (c *FailoverClient) parallelJob(timeout time.Duration, f func(context.Conte
 	wg.Wait()
 }
 
+// Check the current status of all nodes
 func (c *FailoverClient) updateNodes() {
 	c.parallelJob(time.Second, func(ctx context.Context, n *node) {
 		if n.client == nil {
@@ -92,6 +95,7 @@ func (c *FailoverClient) updateNodes() {
 	})
 }
 
+// Continuosly check the current status and failover if necessary
 func (c *FailoverClient) Run() {
 	signal.Notify(c.quit, os.Interrupt, syscall.SIGTERM)
 
@@ -122,6 +126,7 @@ func (c *FailoverClient) Run() {
 		client.Close()
 		if err != nil {
 			slog.Error("Failed to retrieve info from virtual address", slog.String("addr", c.virtualAddress), "err", err)
+			continue
 		}
 		currentMaster := parseRunIDFromInfo(res)
 		if currentMaster != c.currentMaster {
@@ -157,6 +162,7 @@ func (c *FailoverClient) Run() {
 	}
 }
 
+// Close all open client connections
 func (c *FailoverClient) Close() {
 	for _, n := range c.nodes {
 		n.close()

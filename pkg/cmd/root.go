@@ -35,7 +35,8 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
-			return run(cfg, env)
+			run(cmd, cfg, env)
+			return nil
 		},
 	}
 
@@ -64,12 +65,12 @@ func Execute() {
 	}
 }
 
-func run(configPath string, env bool) error {
+func run(cmd *cobra.Command, configPath string, env bool) {
 	cfg, err := config.LoadConfig(configPath, env)
 	if err != nil {
-		return err
+		cmd.PrintErrln("Fatal: " + err.Error())
+		os.Exit(1)
 	}
 
 	failoverclient.NewFailoverClient(cfg.Valkey).Run()
-	return nil
 }

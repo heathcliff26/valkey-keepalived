@@ -2,6 +2,7 @@ package failoverclient
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/valkey-io/valkey-go"
@@ -17,6 +18,7 @@ type node struct {
 
 const failedToConnectToNodeMsg = "Failed to connect to node"
 
+// Connect to valkey and retrieve the run_id
 func (n *node) connect(ctx context.Context, option valkey.ClientOption) error {
 	client, err := newValkeyClient(n.address, n.port, option)
 	if err != nil {
@@ -36,6 +38,8 @@ func (n *node) connect(ctx context.Context, option valkey.ClientOption) error {
 	return nil
 }
 
+// Check that the node is up.
+// Requires client to be present.
 func (n *node) ping(ctx context.Context) {
 	res, err := n.client.Do(ctx, n.client.B().Ping().Build()).ToString()
 	if err != nil || res != "PONG" {
@@ -51,15 +55,16 @@ func (n *node) ping(ctx context.Context) {
 	}
 }
 
+// Make this node a master node
 func (n *node) master(ctx context.Context) error {
 	if n.client == nil {
-		slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
-		return nil
+		return fmt.Errorf("node is not up")
 	}
 
 	return n.client.Do(ctx, n.client.B().Replicaof().No().One().Build()).Error()
 }
 
+// Make this node a slave of the given master
 func (n *node) slave(ctx context.Context, master string) error {
 	if n.client == nil {
 		slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
@@ -69,6 +74,7 @@ func (n *node) slave(ctx context.Context, master string) error {
 	return n.client.Do(ctx, n.client.B().Replicaof().Host(master).Port(n.port).Build()).Error()
 }
 
+// Close the open client
 func (n *node) close() {
 	if n.client != nil {
 		n.client.Close()
