@@ -65,7 +65,7 @@ func TestClientBasicFailover(t *testing.T) {
 	role, info, err := getRoleOfNode(ctx, c.nodes[2])
 	assert.NoError(err, "Should not fail to get role of node 2")
 	assert.Equal(slave, role, "Node 2 should still be a slave")
-	assert.Equal(c.currentMaster, parseValueFromInfo(info, "master_host"), "Node 2 should have the correct master")
+	assert.Equal(c.currentMaster, ParseValueFromInfo(info, "master_host"), "Node 2 should have the correct master")
 }
 
 func TestNodeRecoveryScenario(t *testing.T) {
@@ -114,7 +114,7 @@ func TestNodeRecoveryScenario(t *testing.T) {
 	role, info, err := getRoleOfNode(ctx, c.nodes[1])
 	assert.NoError(err, "Should not fail to get role of node 1")
 	assert.Equal(slave, role, "Node 1 should be a slave")
-	assert.Equal(c.currentMaster, parseValueFromInfo(info, "master_host"), "Node 1 should have the correct master")
+	assert.Equal(c.currentMaster, ParseValueFromInfo(info, "master_host"), "Node 1 should have the correct master")
 }
 
 // Create a new test setup and failoverclient.
@@ -147,7 +147,7 @@ func getRoleOfNode(ctx context.Context, n *node) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	return parseValueFromInfo(res, "role"), res, nil
+	return ParseValueFromInfo(res, "role"), res, nil
 }
 
 func assertNodeDown(assert *assert.Assertions, n *node, id int) {

@@ -13,7 +13,7 @@ func newValkeyClient(addr string, port int64, option valkey.ClientOption) (valke
 	return valkey.NewClient(option)
 }
 
-func parseValueFromInfo(info string, key string) string {
+func ParseValueFromInfo(info string, key string) string {
 	fields := strings.Split(info, "\r\n")
 
 	for _, field := range fields {
@@ -31,5 +31,5 @@ func parseValueFromInfo(info string, key string) string {
 }
 
 func parseRunIDFromInfo(info string) string {
-	return parseValueFromInfo(info, "run_id")
+	return ParseValueFromInfo(info, "run_id")
 }
