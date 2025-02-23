@@ -63,7 +63,7 @@
 				
 				<option value="file3">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/config.go (100.0%)</option>
 				
-				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (78.1%)</option>
+				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (71.9%)</option>
 				
 				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (75.0%)</option>
 				
@@ -464,7 +464,7 @@ func (n *node) connect(ctx context.Context, option valkey.ClientOption) error <s
         }</span>
 
         <span class="cov8" title="1">res, err := client.Do(ctx, client.B().Info().Section("server").Build()).ToString()
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov0" title="0">{
                 client.Close()
                 return err
         }</span>
@@ -532,7 +532,7 @@ func newValkeyClient(addr string, port int64, option valkey.ClientOption) (valke
         return valkey.NewClient(option)
 }</span>
 
-func parseValueFromInfo(info string, key string) string <span class="cov8" title="1">{
+func ParseValueFromInfo(info string, key string) string <span class="cov8" title="1">{
         fields := strings.Split(info, "\r\n")
 
         for _, field := range fields </span><span class="cov8" title="1">{
@@ -550,7 +550,7 @@ func parseValueFromInfo(info string, key string) string <span class="cov8" title
 }
 
 func parseRunIDFromInfo(info string) string <span class="cov8" title="1">{
-        return parseValueFromInfo(info, "run_id")
+        return ParseValueFromInfo(info, "run_id")
 }</span>
 </pre>
 		
