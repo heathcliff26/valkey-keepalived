@@ -16,8 +16,14 @@ const (
 	slave  = "slave"
 )
 
+const (
+	waitTimeout    = 30 * time.Second
+	checkIntervall = time.Second
+)
+
 func TestClientBasicFailover(t *testing.T) {
 	assert := assert.New(t)
+	ctx := t.Context()
 
 	setup, c := newSetupAndClient(t, "basic-failover", 3)
 	go c.Run()
@@ -27,9 +33,7 @@ func TestClientBasicFailover(t *testing.T) {
 
 	assert.Eventually(func() bool {
 		return c.currentMaster != ""
-	}, 30*time.Second, time.Second, "Client should start and find current master")
-
-	ctx := t.Context()
+	}, waitTimeout, checkIntervall, "Client should start and find current master")
 
 	for i, n := range c.nodes {
 		role, _, err := getRoleOfNode(ctx, n)
@@ -50,7 +54,7 @@ func TestClientBasicFailover(t *testing.T) {
 
 	assert.Eventually(func() bool {
 		return c.currentMaster != oldMaster
-	}, 30*time.Second, time.Second, "Should fail over to new master")
+	}, waitTimeout, checkIntervall, "Should fail over to new master")
 
 	assertNodeDown(assert, c.nodes[0], 0)
 
@@ -62,6 +66,55 @@ func TestClientBasicFailover(t *testing.T) {
 	assert.NoError(err, "Should not fail to get role of node 2")
 	assert.Equal(slave, role, "Node 2 should still be a slave")
 	assert.Equal(c.currentMaster, parseValueFromInfo(info, "master_host"), "Node 2 should have the correct master")
+}
+
+func TestNodeRecoveryScenario(t *testing.T) {
+	assert := assert.New(t)
+	ctx := t.Context()
+
+	setup, c := newSetupAndClient(t, "node-recovery", 3)
+
+	err := setup.StopNode(1)
+	if !assert.NoError(err, "should stop node 1") {
+		t.FailNow()
+	}
+
+	go c.Run()
+	t.Cleanup(func() {
+		c.quit <- syscall.SIGTERM
+	})
+
+	assert.Eventually(func() bool {
+		return c.currentMaster != ""
+	}, waitTimeout, checkIntervall, "Client should start and find current master")
+
+	role, _, err := getRoleOfNode(ctx, c.nodes[0])
+	assert.NoError(err, "Should not fail to get role of node 0")
+	assert.Equal(master, role, "Node 0 should be the master")
+
+	role, _, err = getRoleOfNode(ctx, c.nodes[2])
+	assert.NoError(err, "Should not fail to get role of node 2")
+	assert.Equal(slave, role, "Node 2 should be a slave")
+
+	err = setup.StartNode(1)
+	if !assert.NoError(err, "should start node 1") {
+		t.FailNow()
+	}
+	c.nodes[1].address, err = testutils.GetContainerIP(setup.Nodes[1])
+	if !assert.NoError(err, "Should get ip of node 1") {
+		t.FailNow()
+	}
+
+	if !assert.Eventually(func() bool {
+		return c.nodes[1].up
+	}, waitTimeout, checkIntervall, "Node 1 should come back up") {
+		t.FailNow()
+	}
+
+	role, info, err := getRoleOfNode(ctx, c.nodes[1])
+	assert.NoError(err, "Should not fail to get role of node 1")
+	assert.Equal(slave, role, "Node 1 should be a slave")
+	assert.Equal(c.currentMaster, parseValueFromInfo(info, "master_host"), "Node 1 should have the correct master")
 }
 
 // Create a new test setup and failoverclient.
