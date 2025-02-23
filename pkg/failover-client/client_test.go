@@ -118,13 +118,12 @@ func TestNodeRecoveryScenario(t *testing.T) {
 }
 
 // Create a new test setup and failoverclient.
-// Run test in parallel and skip if no container runtime is found.
+// Skip test if no container runtime is found.
 // Ensure cleanup is called for the setup.
 func newSetupAndClient(t *testing.T, prefix string, nodeCount int) (*testutils.FailoverSetup, *FailoverClient) {
 	if !testutils.HasContainerRuntimer() {
 		t.Skip("No container runtime found")
 	}
-	t.Parallel()
 
 	setup, virtualIP, nodes, err := testutils.NewFailoverSetup(prefix, nodeCount)
 	if !assert.NoError(t, err, "Should create setup") {
