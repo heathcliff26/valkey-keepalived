@@ -59,11 +59,11 @@
 				
 				<option value="file1">github.com/heathcliff26/valkey-keepalived/pkg/config/config.go (96.7%)</option>
 				
-				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (80.0%)</option>
+				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (89.1%)</option>
 				
 				<option value="file3">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/config.go (100.0%)</option>
 				
-				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (46.9%)</option>
+				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (78.1%)</option>
 				
 				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (75.0%)</option>
 				
@@ -339,14 +339,14 @@ func (c *FailoverClient) updateNodes() <span class="cov8" title="1">{
         c.parallelJob(time.Second, func(ctx context.Context, n *node) </span><span class="cov8" title="1">{
                 if n.client == nil </span><span class="cov8" title="1">{
                         err := n.connect(ctx, c.clientOption)
-                        if err != nil </span><span class="cov0" title="0">{
-                                if n.up </span><span class="cov0" title="0">{
+                        if err != nil </span><span class="cov8" title="1">{
+                                if n.up </span><span class="cov8" title="1">{
                                         slog.Warn(failedToConnectToNodeMsg, slog.String("node", n.address), "err", err)
                                         n.up = false
-                                }</span> else<span class="cov0" title="0"> {
+                                }</span> else<span class="cov8" title="1"> {
                                         slog.Debug(failedToConnectToNodeMsg, slog.String("node", n.address), "err", err)
                                 }</span>
-                                <span class="cov0" title="0">return</span>
+                                <span class="cov8" title="1">return</span>
                         }
                 }
 
@@ -459,12 +459,12 @@ const failedToConnectToNodeMsg = "Failed to connect to node"
 
 func (n *node) connect(ctx context.Context, option valkey.ClientOption) error <span class="cov8" title="1">{
         client, err := newValkeyClient(n.address, n.port, option)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return err
         }</span>
 
         <span class="cov8" title="1">res, err := client.Do(ctx, client.B().Info().Section("server").Build()).ToString()
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 client.Close()
                 return err
         }</span>
@@ -478,12 +478,12 @@ func (n *node) connect(ctx context.Context, option valkey.ClientOption) error <s
 
 func (n *node) ping(ctx context.Context) <span class="cov8" title="1">{
         res, err := n.client.Do(ctx, n.client.B().Ping().Build()).ToString()
-        if err != nil || res != "PONG" </span><span class="cov0" title="0">{
-                if n.up </span><span class="cov0" title="0">{
+        if err != nil || res != "PONG" </span><span class="cov8" title="1">{
+                if n.up </span><span class="cov8" title="1">{
                         slog.Info("Node is DOWN", slog.String("node", n.address), "err", err, slog.String("res", res))
                         n.up = false
                 }</span>
-                <span class="cov0" title="0">n.client.Close()
+                <span class="cov8" title="1">n.client.Close()
                 n.client = nil</span>
         } else<span class="cov8" title="1"> if !n.up </span><span class="cov0" title="0">{
                 n.up = true
@@ -501,7 +501,7 @@ func (n *node) master(ctx context.Context) error <span class="cov8" title="1">{
 }
 
 func (n *node) slave(ctx context.Context, master string) error <span class="cov8" title="1">{
-        if n.client == nil </span><span class="cov0" title="0">{
+        if n.client == nil </span><span class="cov8" title="1">{
                 slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
                 return nil
         }</span>
