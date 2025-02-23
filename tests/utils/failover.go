@@ -8,6 +8,11 @@ import (
 const haproxyConfigTemplate = `global
 	log stdout format raw local0 info
 
+	defaults
+		timeout client 1s
+		timeout connect 1s
+		timeout server 1s
+
 	frontend valkey
 		mode tcp
 		bind :6379
