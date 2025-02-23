@@ -13,6 +13,9 @@ image:
 test:
 	go test -v -coverprofile=coverprofile.out -coverpkg "./pkg/..." ./cmd/... ./pkg/...
 
+test-e2e:
+	go test -count=1 -v ./tests/e2e/...
+
 update-deps:
 	hack/update-deps.sh
 
@@ -23,7 +26,7 @@ lint: golangci-lint
 	golangci-lint run -v
 
 fmt:
-	gofmt -s -w ./cmd ./pkg
+	gofmt -s -w ./cmd ./pkg ./tests
 
 validate:
 	hack/validate.sh
@@ -38,6 +41,7 @@ golangci-lint:
 	build \
 	image \
 	test \
+	test-e2e \
 	update-deps \
 	coverprofile \
 	lint \
