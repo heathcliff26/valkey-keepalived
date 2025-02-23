@@ -32,20 +32,18 @@ func TestClientBasicFailover(t *testing.T) {
 	})
 
 	assert.Eventually(func() bool {
-		return c.currentMaster != ""
+		return c.masterAddr != ""
 	}, waitTimeout, checkIntervall, "Client should start and find current master")
 
 	for i, n := range c.nodes {
-		role, _, err := getRoleOfNode(ctx, n)
-		assert.NoErrorf(err, "Should not fail to get role of node %d", i)
-		expectedRole := slave
 		if i == 0 {
-			expectedRole = master
+			assertNodeRoleEventually(t, ctx, n, master, "", i)
+		} else {
+			assertNodeRoleEventually(t, ctx, n, slave, c.masterAddr, i)
 		}
-		assert.Equalf(expectedRole, role, "Node %d should have the expected role", i)
 	}
 
-	oldMaster := c.currentMaster
+	oldMaster := c.masterAddr
 
 	err := setup.StopNode(0)
 	if !assert.NoError(err, "Should stop the first node") {
@@ -53,19 +51,13 @@ func TestClientBasicFailover(t *testing.T) {
 	}
 
 	assert.Eventually(func() bool {
-		return c.currentMaster != oldMaster
+		return c.masterAddr != oldMaster
 	}, waitTimeout, checkIntervall, "Should fail over to new master")
 
 	assertNodeDown(assert, c.nodes[0], 0)
 
-	role, _, err := getRoleOfNode(ctx, c.nodes[1])
-	assert.NoError(err, "Should not fail to get role of node 1")
-	assert.Equal(master, role, "Node 1 should be the new master")
-
-	role, info, err := getRoleOfNode(ctx, c.nodes[2])
-	assert.NoError(err, "Should not fail to get role of node 2")
-	assert.Equal(slave, role, "Node 2 should still be a slave")
-	assert.Equal(c.currentMaster, ParseValueFromInfo(info, "master_host"), "Node 2 should have the correct master")
+	assertNodeRoleEventually(t, ctx, c.nodes[1], master, "", 1)
+	assertNodeRoleEventually(t, ctx, c.nodes[2], slave, c.masterAddr, 2)
 }
 
 func TestNodeRecoveryScenario(t *testing.T) {
@@ -85,16 +77,12 @@ func TestNodeRecoveryScenario(t *testing.T) {
 	})
 
 	assert.Eventually(func() bool {
-		return c.currentMaster != ""
+		return c.masterAddr != ""
 	}, waitTimeout, checkIntervall, "Client should start and find current master")
 
-	role, _, err := getRoleOfNode(ctx, c.nodes[0])
-	assert.NoError(err, "Should not fail to get role of node 0")
-	assert.Equal(master, role, "Node 0 should be the master")
+	assertNodeRoleEventually(t, ctx, c.nodes[0], master, "", 0)
 
-	role, _, err = getRoleOfNode(ctx, c.nodes[2])
-	assert.NoError(err, "Should not fail to get role of node 2")
-	assert.Equal(slave, role, "Node 2 should be a slave")
+	assertNodeRoleEventually(t, ctx, c.nodes[2], slave, c.masterAddr, 2)
 
 	err = setup.StartNode(1)
 	if !assert.NoError(err, "should start node 1") {
@@ -111,10 +99,42 @@ func TestNodeRecoveryScenario(t *testing.T) {
 		t.FailNow()
 	}
 
-	role, info, err := getRoleOfNode(ctx, c.nodes[1])
-	assert.NoError(err, "Should not fail to get role of node 1")
-	assert.Equal(slave, role, "Node 1 should be a slave")
-	assert.Equal(c.currentMaster, ParseValueFromInfo(info, "master_host"), "Node 1 should have the correct master")
+	assertNodeRoleEventually(t, ctx, c.nodes[1], slave, c.masterAddr, 1)
+}
+
+func TestReplication(t *testing.T) {
+	assert := assert.New(t)
+	ctx := t.Context()
+
+	_, c := newSetupAndClient(t, "replication", 3)
+	go c.Run()
+	t.Cleanup(func() {
+		c.quit <- syscall.SIGTERM
+	})
+
+	assert.Eventually(func() bool {
+		return c.masterAddr != ""
+	}, waitTimeout, checkIntervall, "Client should start and find current master")
+
+	k, v := "testreplicationkey", "testreplicationvalue"
+
+	err := c.nodes[0].client.Do(ctx, c.nodes[0].client.B().Set().Key(k).Value(v).Build()).Error()
+	if !assert.NoError(err, "Should write value") {
+		t.FailNow()
+	}
+
+	for i, n := range c.nodes {
+		ok := assert.Eventuallyf(func() bool {
+			res, err := n.client.Do(ctx, n.client.B().Get().Key(k).Build()).ToString()
+			if err != nil {
+				t.Logf("Failed to get key from node %d: %v", i, err)
+			}
+			return res == v
+		}, waitTimeout, checkIntervall, "Node %d should have the key value pair", i)
+		if !ok {
+			t.FailNow()
+		}
+	}
 }
 
 // Create a new test setup and failoverclient.
@@ -153,4 +173,23 @@ func getRoleOfNode(ctx context.Context, n *node) (string, string, error) {
 func assertNodeDown(assert *assert.Assertions, n *node, id int) {
 	assert.Falsef(n.up, "Node %d should be down", id)
 	assert.Nil(n.client, "Node %d should not have a client", id)
+}
+
+func assertNodeRoleEventually(t *testing.T, ctx context.Context, n *node, expectedRole, masterAddr string, id int) {
+	assert.Eventuallyf(t, func() bool {
+		role, info, err := getRoleOfNode(ctx, n)
+		if err != nil {
+			t.Logf("Failed to get role of node %d: %v", id, err)
+			return false
+		}
+
+		if role != expectedRole {
+			return false
+		}
+		if masterAddr != "" && masterAddr != ParseValueFromInfo(info, "master_host") {
+			t.Logf("Node %d has the wrong master, expected \"%s\" but has \"%s\"", id, masterAddr, ParseValueFromInfo(info, "master_host"))
+			return false
+		}
+		return true
+	}, waitTimeout, checkIntervall, "Node %d should have the expected role %s", id, expectedRole)
 }
