@@ -59,7 +59,7 @@
 				
 				<option value="file1">github.com/heathcliff26/valkey-keepalived/pkg/config/config.go (96.7%)</option>
 				
-				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (89.1%)</option>
+				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (90.9%)</option>
 				
 				<option value="file3">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/config.go (100.0%)</option>
 				
@@ -282,6 +282,7 @@ type FailoverClient struct {
         virtualAddress string
         port           int64
         currentMaster  string
+        masterAddr     string
 
         quit chan os.Signal
 }
@@ -385,16 +386,32 @@ func (c *FailoverClient) Run() <span class="cov8" title="1">{
                 if err != nil </span><span class="cov0" title="0">{
                         slog.Error("Failed to retrieve info from virtual address", slog.String("addr", c.virtualAddress), "err", err)
                 }</span>
-                <span class="cov8" title="1">c.currentMaster = parseRunIDFromInfo(res)
+                <span class="cov8" title="1">currentMaster := parseRunIDFromInfo(res)
+                if currentMaster != c.currentMaster </span><span class="cov8" title="1">{
+                        found := false
+                        for _, n := range c.nodes </span><span class="cov8" title="1">{
+                                if n.runID == currentMaster </span><span class="cov8" title="1">{
+                                        c.currentMaster = currentMaster
+                                        c.masterAddr = n.address
+                                        found = true
+                                }</span>
+                        }
+                        <span class="cov8" title="1">if found </span><span class="cov8" title="1">{
+                                slog.Error("Could not find the current masters addr", slog.String("run_id", currentMaster))
+                                continue</span>
+                        } else<span class="cov8" title="1"> {
+                                slog.Info("Failing over to new master", slog.String("addr", c.masterAddr), slog.String("run_id", c.currentMaster))
+                        }</span>
+                }
 
-                c.parallelJob(time.Second, func(ctx context.Context, n *node) </span><span class="cov8" title="1">{
+                <span class="cov8" title="1">c.parallelJob(time.Second, func(ctx context.Context, n *node) </span><span class="cov8" title="1">{
                         if n.runID == c.currentMaster </span><span class="cov8" title="1">{
                                 err := n.master(ctx)
                                 if err != nil </span><span class="cov0" title="0">{
                                         slog.Error("Failed to update node to master", slog.String("node", n.address), "err", err)
                                 }</span>
                         } else<span class="cov8" title="1"> {
-                                err := n.slave(ctx, c.currentMaster)
+                                err := n.slave(ctx, c.masterAddr)
                                 if err != nil </span><span class="cov0" title="0">{
                                         slog.Error("Failed to update node to slave", slog.String("node", n.address), "err", err)
                                 }</span>
