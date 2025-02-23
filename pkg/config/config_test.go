@@ -65,6 +65,11 @@ func TestInvalidConfig(t *testing.T) {
 		Name, Path, Mode, Error string
 	}{
 		{
+			Name:  "EmptyPath",
+			Path:  "",
+			Error: "*fs.PathError",
+		},
+		{
 			Name:  "InvalidPath",
 			Path:  "file-does-not-exist.yaml",
 			Error: "*fs.PathError",

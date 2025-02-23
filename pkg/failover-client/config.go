@@ -11,6 +11,7 @@ type ValkeyConfig struct {
 	TLS            bool     `json:"tls,omitempty"`
 }
 
+// Ensure that the given config is valid
 func (c ValkeyConfig) Validate() error {
 	if c.VirtualAddress == "" {
 		return fmt.Errorf("missing virtual address")
