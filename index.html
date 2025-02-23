@@ -55,17 +55,17 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/heathcliff26/valkey-keepalived/pkg/cmd/root.go (28.6%)</option>
+				<option value="file0">github.com/heathcliff26/valkey-keepalived/pkg/cmd/root.go (79.3%)</option>
 				
-				<option value="file1">github.com/heathcliff26/valkey-keepalived/pkg/config/config.go (96.7%)</option>
+				<option value="file1">github.com/heathcliff26/valkey-keepalived/pkg/config/config.go (100.0%)</option>
 				
-				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (90.9%)</option>
+				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (92.5%)</option>
 				
 				<option value="file3">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/config.go (100.0%)</option>
 				
-				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (78.1%)</option>
+				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (96.8%)</option>
 				
-				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (75.0%)</option>
+				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (100.0%)</option>
 				
 				<option value="file6">github.com/heathcliff26/valkey-keepalived/pkg/version/version.go (81.0%)</option>
 				
@@ -107,18 +107,19 @@ func NewRootCommand() *cobra.Command <span class="cov8" title="1">{
         <span class="cov8" title="1">rootCmd := &amp;cobra.Command{
                 Use:   version.Name,
                 Short: version.Name + " failover a group of valkey databases based on a virtual ip",
-                RunE: func(cmd *cobra.Command, _ []string) error </span><span class="cov0" title="0">{
+                RunE: func(cmd *cobra.Command, _ []string) error </span><span class="cov8" title="1">{
                         cfg, err := cmd.Flags().GetString(flagNameConfig)
                         if err != nil </span><span class="cov0" title="0">{
                                 return err
                         }</span>
 
-                        <span class="cov0" title="0">env, err := cmd.Flags().GetBool(flagNameEnv)
+                        <span class="cov8" title="1">env, err := cmd.Flags().GetBool(flagNameEnv)
                         if err != nil </span><span class="cov0" title="0">{
                                 return err
                         }</span>
 
-                        <span class="cov0" title="0">return run(cfg, env)</span>
+                        <span class="cov8" title="1">run(cmd, cfg, env)
+                        return nil</span>
                 },
         }
 
@@ -138,23 +139,23 @@ func NewRootCommand() *cobra.Command <span class="cov8" title="1">{
         return rootCmd</span>
 }
 
-func Execute() <span class="cov0" title="0">{
+func Execute() <span class="cov8" title="1">{
         cmd := NewRootCommand()
         err := cmd.Execute()
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 cmd.PrintErrln("Fatal: " + err.Error())
                 os.Exit(1)
         }</span>
 }
 
-func run(configPath string, env bool) error <span class="cov0" title="0">{
+func run(cmd *cobra.Command, configPath string, env bool) <span class="cov8" title="1">{
         cfg, err := config.LoadConfig(configPath, env)
-        if err != nil </span><span class="cov0" title="0">{
-                return err
+        if err != nil </span><span class="cov8" title="1">{
+                cmd.PrintErrln("Fatal: " + err.Error())
+                os.Exit(1)
         }</span>
 
-        <span class="cov0" title="0">failoverclient.NewFailoverClient(cfg.Valkey).Run()
-        return nil</span>
+        <span class="cov0" title="0">failoverclient.NewFailoverClient(cfg.Valkey).Run()</span>
 }
 </pre>
 		
@@ -212,7 +213,7 @@ func DefaultConfig() Config <span class="cov8" title="1">{
 func LoadConfig(path string, env bool) (Config, error) <span class="cov8" title="1">{
         c := DefaultConfig()
 
-        if path == "" </span><span class="cov0" title="0">{
+        if path == "" </span><span class="cov8" title="1">{
                 path = DEFAULT_CONFIG_PATH
         }</span>
 
@@ -287,6 +288,7 @@ type FailoverClient struct {
         quit chan os.Signal
 }
 
+// Create a new failover client from the given configuration
 func NewFailoverClient(cfg ValkeyConfig) *FailoverClient <span class="cov8" title="1">{
         option := valkey.ClientOption{
                 Username:     cfg.Username,
@@ -317,6 +319,7 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient <span class="cov8" titl
         }</span>
 }
 
+// Run the given function on all nodes in parallel and wait
 func (c *FailoverClient) parallelJob(timeout time.Duration, f func(context.Context, *node)) <span class="cov8" title="1">{
         var wg sync.WaitGroup
 
@@ -336,6 +339,7 @@ func (c *FailoverClient) parallelJob(timeout time.Duration, f func(context.Conte
         <span class="cov8" title="1">wg.Wait()</span>
 }
 
+// Check the current status of all nodes
 func (c *FailoverClient) updateNodes() <span class="cov8" title="1">{
         c.parallelJob(time.Second, func(ctx context.Context, n *node) </span><span class="cov8" title="1">{
                 if n.client == nil </span><span class="cov8" title="1">{
@@ -355,6 +359,7 @@ func (c *FailoverClient) updateNodes() <span class="cov8" title="1">{
         })
 }
 
+// Continuosly check the current status and failover if necessary
 func (c *FailoverClient) Run() <span class="cov8" title="1">{
         signal.Notify(c.quit, os.Interrupt, syscall.SIGTERM)
 
@@ -385,7 +390,8 @@ func (c *FailoverClient) Run() <span class="cov8" title="1">{
                 client.Close()
                 if err != nil </span><span class="cov0" title="0">{
                         slog.Error("Failed to retrieve info from virtual address", slog.String("addr", c.virtualAddress), "err", err)
-                }</span>
+                        continue</span>
+                }
                 <span class="cov8" title="1">currentMaster := parseRunIDFromInfo(res)
                 if currentMaster != c.currentMaster </span><span class="cov8" title="1">{
                         found := false
@@ -420,8 +426,9 @@ func (c *FailoverClient) Run() <span class="cov8" title="1">{
         }
 }
 
-func (c *FailoverClient) Close() <span class="cov0" title="0">{
-        for _, n := range c.nodes </span><span class="cov0" title="0">{
+// Close all open client connections
+func (c *FailoverClient) Close() <span class="cov8" title="1">{
+        for _, n := range c.nodes </span><span class="cov8" title="1">{
                 n.close()
         }</span>
 }
@@ -440,6 +447,7 @@ type ValkeyConfig struct {
         TLS            bool     `json:"tls,omitempty"`
 }
 
+// Ensure that the given config is valid
 func (c ValkeyConfig) Validate() error <span class="cov8" title="1">{
         if c.VirtualAddress == "" </span><span class="cov8" title="1">{
                 return fmt.Errorf("missing virtual address")
@@ -459,6 +467,7 @@ func (c ValkeyConfig) Validate() error <span class="cov8" title="1">{
 
 import (
         "context"
+        "fmt"
         "log/slog"
 
         "github.com/valkey-io/valkey-go"
@@ -474,6 +483,7 @@ type node struct {
 
 const failedToConnectToNodeMsg = "Failed to connect to node"
 
+// Connect to valkey and retrieve the run_id
 func (n *node) connect(ctx context.Context, option valkey.ClientOption) error <span class="cov8" title="1">{
         client, err := newValkeyClient(n.address, n.port, option)
         if err != nil </span><span class="cov8" title="1">{
@@ -493,6 +503,8 @@ func (n *node) connect(ctx context.Context, option valkey.ClientOption) error <s
         return nil</span>
 }
 
+// Check that the node is up.
+// Requires client to be present.
 func (n *node) ping(ctx context.Context) <span class="cov8" title="1">{
         res, err := n.client.Do(ctx, n.client.B().Ping().Build()).ToString()
         if err != nil || res != "PONG" </span><span class="cov8" title="1">{
@@ -502,21 +514,22 @@ func (n *node) ping(ctx context.Context) <span class="cov8" title="1">{
                 }</span>
                 <span class="cov8" title="1">n.client.Close()
                 n.client = nil</span>
-        } else<span class="cov8" title="1"> if !n.up </span><span class="cov0" title="0">{
+        } else<span class="cov8" title="1"> if !n.up </span><span class="cov8" title="1">{
                 n.up = true
                 slog.Info("Node is UP", slog.String("node", n.address))
         }</span>
 }
 
+// Make this node a master node
 func (n *node) master(ctx context.Context) error <span class="cov8" title="1">{
         if n.client == nil </span><span class="cov0" title="0">{
-                slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
-                return nil
+                return fmt.Errorf("node is not up")
         }</span>
 
         <span class="cov8" title="1">return n.client.Do(ctx, n.client.B().Replicaof().No().One().Build()).Error()</span>
 }
 
+// Make this node a slave of the given master
 func (n *node) slave(ctx context.Context, master string) error <span class="cov8" title="1">{
         if n.client == nil </span><span class="cov8" title="1">{
                 slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
@@ -526,8 +539,9 @@ func (n *node) slave(ctx context.Context, master string) error <span class="cov8
         <span class="cov8" title="1">return n.client.Do(ctx, n.client.B().Replicaof().Host(master).Port(n.port).Build()).Error()</span>
 }
 
-func (n *node) close() <span class="cov0" title="0">{
-        if n.client != nil </span><span class="cov0" title="0">{
+// Close the open client
+func (n *node) close() <span class="cov8" title="1">{
+        if n.client != nil </span><span class="cov8" title="1">{
                 n.client.Close()
                 n.client = nil
         }</span>
@@ -549,12 +563,13 @@ func newValkeyClient(addr string, port int64, option valkey.ClientOption) (valke
         return valkey.NewClient(option)
 }</span>
 
+// Takes a given info result from valkey and extracts the wanted value
 func ParseValueFromInfo(info string, key string) string <span class="cov8" title="1">{
         fields := strings.Split(info, "\r\n")
 
         for _, field := range fields </span><span class="cov8" title="1">{
                 keyval := strings.SplitN(field, ":", 2)
-                if len(keyval) != 2 </span><span class="cov0" title="0">{
+                if len(keyval) != 2 </span><span class="cov8" title="1">{
                         continue</span>
                 }
                 <span class="cov8" title="1">if keyval[0] == key </span><span class="cov8" title="1">{
@@ -562,7 +577,7 @@ func ParseValueFromInfo(info string, key string) string <span class="cov8" title
                 }</span>
         }
 
-        <span class="cov0" title="0">slog.Error("Could not find the requested key in info", "info", info, "key", key)
+        <span class="cov8" title="1">slog.Error("Could not find the requested key in info", "info", info, "key", key)
         return ""</span>
 }
 
