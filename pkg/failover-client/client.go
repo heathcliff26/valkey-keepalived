@@ -82,14 +82,14 @@ func (c *FailoverClient) updateNodes() {
 		if n.client == nil {
 			err := n.connect(ctx, c.clientOption)
 			if err != nil {
+				logLevel := slog.LevelDebug
 				if n.up {
-					slog.Warn(failedToConnectToNodeMsg, slog.String("node", n.address), "err", err)
+					logLevel = slog.LevelWarn
 					n.up = false
-				} else {
-					slog.Debug(failedToConnectToNodeMsg, slog.String("node", n.address), "err", err)
 				}
-				return
+				slog.Log(ctx, logLevel, nodeDownMsg, slog.String("node", n.address), "err", err)
 			}
+			return
 		}
 
 		n.ping(ctx)
@@ -139,11 +139,11 @@ func (c *FailoverClient) Run() {
 					found = true
 				}
 			}
-			if found {
+			if !found {
 				slog.Error("Could not find the current masters addr", slog.String(runID, currentMaster))
 				continue
 			} else {
-				slog.Info("Failing over to new master", slog.String("addr", c.masterAddr), slog.String(runID, c.currentMaster))
+				slog.Info("Switching over to new master", slog.String("addr", c.masterAddr), slog.String(runID, c.currentMaster))
 			}
 		}
 
