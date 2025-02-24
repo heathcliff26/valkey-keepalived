@@ -40,9 +40,10 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient {
 
 	for i, addr := range cfg.Nodes {
 		nodes[i] = &node{
-			address: addr,
-			port:    cfg.Port,
-			up:      true,
+			address:   addr,
+			port:      cfg.Port,
+			up:        true,
+			roleCache: &roleCache{},
 		}
 	}
 
@@ -128,7 +129,7 @@ func (c *FailoverClient) Run() {
 			slog.Error("Failed to retrieve info from virtual address", slog.String("addr", c.virtualAddress), "err", err)
 			continue
 		}
-		currentMaster := parseRunIDFromInfo(res)
+		currentMaster := ParseValueFromInfo(res, runID)
 		if currentMaster != c.currentMaster {
 			found := false
 			for _, n := range c.nodes {
@@ -139,10 +140,10 @@ func (c *FailoverClient) Run() {
 				}
 			}
 			if found {
-				slog.Error("Could not find the current masters addr", slog.String("run_id", currentMaster))
+				slog.Error("Could not find the current masters addr", slog.String(runID, currentMaster))
 				continue
 			} else {
-				slog.Info("Failing over to new master", slog.String("addr", c.masterAddr), slog.String("run_id", c.currentMaster))
+				slog.Info("Failing over to new master", slog.String("addr", c.masterAddr), slog.String(runID, c.currentMaster))
 			}
 		}
 

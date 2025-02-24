@@ -30,7 +30,3 @@ func ParseValueFromInfo(info string, key string) string {
 	slog.Error("Could not find the requested key in info", "info", info, "key", key)
 	return ""
 }
-
-func parseRunIDFromInfo(info string) string {
-	return ParseValueFromInfo(info, "run_id")
-}
