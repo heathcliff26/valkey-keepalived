@@ -59,7 +59,7 @@
 				
 				<option value="file1">github.com/heathcliff26/valkey-keepalived/pkg/config/config.go (100.0%)</option>
 				
-				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (92.5%)</option>
+				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (92.6%)</option>
 				
 				<option value="file3">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/config.go (100.0%)</option>
 				
@@ -346,14 +346,14 @@ func (c *FailoverClient) updateNodes() <span class="cov8" title="1">{
                 if n.client == nil </span><span class="cov8" title="1">{
                         err := n.connect(ctx, c.clientOption)
                         if err != nil </span><span class="cov8" title="1">{
+                                logLevel := slog.LevelDebug
                                 if n.up </span><span class="cov8" title="1">{
-                                        slog.Warn(failedToConnectToNodeMsg, slog.String("node", n.address), "err", err)
+                                        logLevel = slog.LevelWarn
                                         n.up = false
-                                }</span> else<span class="cov8" title="1"> {
-                                        slog.Debug(failedToConnectToNodeMsg, slog.String("node", n.address), "err", err)
                                 }</span>
-                                <span class="cov8" title="1">return</span>
+                                <span class="cov8" title="1">slog.Log(ctx, logLevel, nodeDownMsg, slog.String("node", n.address), "err", err)</span>
                         }
+                        <span class="cov8" title="1">return</span>
                 }
 
                 <span class="cov8" title="1">n.ping(ctx)</span>
@@ -403,11 +403,11 @@ func (c *FailoverClient) Run() <span class="cov8" title="1">{
                                         found = true
                                 }</span>
                         }
-                        <span class="cov8" title="1">if found </span><span class="cov8" title="1">{
+                        <span class="cov8" title="1">if !found </span><span class="cov8" title="1">{
                                 slog.Error("Could not find the current masters addr", slog.String(runID, currentMaster))
                                 continue</span>
                         } else<span class="cov8" title="1"> {
-                                slog.Info("Failing over to new master", slog.String("addr", c.masterAddr), slog.String(runID, c.currentMaster))
+                                slog.Info("Switching over to new master", slog.String("addr", c.masterAddr), slog.String(runID, c.currentMaster))
                         }</span>
                 }
 
@@ -495,7 +495,10 @@ type node struct {
         roleCache *roleCache
 }
 
-const failedToConnectToNodeMsg = "Failed to connect to node"
+const (
+        nodeDownMsg = "Node is DOWN"
+        nodeUpMsg   = "Node is UP"
+)
 
 // Connect to valkey and retrieve the run_id
 func (n *node) connect(ctx context.Context, option valkey.ClientOption) error <span class="cov8" title="1">{
@@ -523,14 +526,14 @@ func (n *node) ping(ctx context.Context) <span class="cov8" title="1">{
         res, err := n.client.Do(ctx, n.client.B().Ping().Build()).ToString()
         if err != nil || res != "PONG" </span><span class="cov8" title="1">{
                 if n.up </span><span class="cov8" title="1">{
-                        slog.Info("Node is DOWN", slog.String("node", n.address), "err", err, slog.String("res", res))
+                        slog.Info(nodeDownMsg, slog.String("node", n.address), "err", err, slog.String("res", res))
                         n.up = false
                 }</span>
                 <span class="cov8" title="1">n.client.Close()
                 n.client = nil</span>
         } else<span class="cov8" title="1"> if !n.up </span><span class="cov8" title="1">{
                 n.up = true
-                slog.Info("Node is UP", slog.String("node", n.address))
+                slog.Info(nodeUpMsg, slog.String("node", n.address))
         }</span>
 }
 
