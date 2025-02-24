@@ -29,7 +29,10 @@ type node struct {
 	roleCache *roleCache
 }
 
-const failedToConnectToNodeMsg = "Failed to connect to node"
+const (
+	nodeDownMsg = "Node is DOWN"
+	nodeUpMsg   = "Node is UP"
+)
 
 // Connect to valkey and retrieve the run_id
 func (n *node) connect(ctx context.Context, option valkey.ClientOption) error {
@@ -57,14 +60,14 @@ func (n *node) ping(ctx context.Context) {
 	res, err := n.client.Do(ctx, n.client.B().Ping().Build()).ToString()
 	if err != nil || res != "PONG" {
 		if n.up {
-			slog.Info("Node is DOWN", slog.String("node", n.address), "err", err, slog.String("res", res))
+			slog.Info(nodeDownMsg, slog.String("node", n.address), "err", err, slog.String("res", res))
 			n.up = false
 		}
 		n.client.Close()
 		n.client = nil
 	} else if !n.up {
 		n.up = true
-		slog.Info("Node is UP", slog.String("node", n.address))
+		slog.Info(nodeUpMsg, slog.String("node", n.address))
 	}
 }
 
