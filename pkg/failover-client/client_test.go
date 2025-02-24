@@ -2,7 +2,6 @@ package failoverclient
 
 import (
 	"context"
-	"fmt"
 	"syscall"
 	"testing"
 	"time"
@@ -11,11 +10,6 @@ import (
 	testutils "github.com/heathcliff26/valkey-keepalived/tests/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/valkey-io/valkey-go"
-)
-
-const (
-	master = "master"
-	slave  = "slave"
 )
 
 const (
@@ -193,14 +187,11 @@ func newSetupAndClient(t *testing.T, prefix string, nodeCount int) (*testutils.F
 }
 
 func getRoleOfNode(ctx context.Context, n *node) (string, string, error) {
-	if n.client == nil {
-		return "", "", fmt.Errorf("node has no client")
-	}
-	res, err := n.client.Do(ctx, n.client.B().Info().Section("replication").Build()).ToString()
+	res, err := n.getReplicationInfo(ctx)
 	if err != nil {
 		return "", "", err
 	}
-	return ParseValueFromInfo(res, "role"), res, nil
+	return ParseValueFromInfo(res, role), res, nil
 }
 
 func assertNodeDown(assert *assert.Assertions, n *node, id int) {
@@ -219,8 +210,8 @@ func assertNodeRoleEventually(t *testing.T, ctx context.Context, n *node, expect
 		if role != expectedRole {
 			return false
 		}
-		if masterAddr != "" && masterAddr != ParseValueFromInfo(info, "master_host") {
-			t.Logf("Node %d has the wrong master, expected \"%s\" but has \"%s\"", id, masterAddr, ParseValueFromInfo(info, "master_host"))
+		if masterAddr != "" && masterAddr != ParseValueFromInfo(info, masterHost) {
+			t.Logf("Node %d has the wrong master, expected \"%s\" but has \"%s\"", id, masterAddr, ParseValueFromInfo(info, masterHost))
 			return false
 		}
 		return true

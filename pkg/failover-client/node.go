@@ -4,8 +4,18 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/valkey-io/valkey-go"
+)
+
+const (
+	master = "master"
+	slave  = "slave"
+
+	runID      = "run_id"
+	role       = "role"
+	masterHost = "master_host"
 )
 
 type node struct {
@@ -14,6 +24,9 @@ type node struct {
 	runID   string
 	up      bool
 	client  valkey.Client
+
+	// Caches the last successfully set role to reduce api calls
+	roleCache *roleCache
 }
 
 const failedToConnectToNodeMsg = "Failed to connect to node"
@@ -31,7 +44,7 @@ func (n *node) connect(ctx context.Context, option valkey.ClientOption) error {
 		return err
 	}
 
-	n.runID = parseRunIDFromInfo(res)
+	n.runID = ParseValueFromInfo(res, runID)
 	n.client = client
 	n.up = true
 
@@ -60,18 +73,58 @@ func (n *node) master(ctx context.Context) error {
 	if n.client == nil {
 		return fmt.Errorf("node is not up")
 	}
+	if n.roleCache.IsMaster() {
+		return nil
+	}
 
-	return n.client.Do(ctx, n.client.B().Replicaof().No().One().Build()).Error()
+	info, err := n.getReplicationInfo(ctx)
+	if err != nil {
+		return err
+	}
+	if ParseValueFromInfo(info, role) == master {
+		n.roleCache.Save(master, "")
+		return nil
+	}
+
+	err = n.client.Do(ctx, n.client.B().Replicaof().No().One().Build()).Error()
+	if err != nil {
+		return err
+	}
+	n.roleCache.Save(master, "")
+	return nil
 }
 
 // Make this node a slave of the given master
-func (n *node) slave(ctx context.Context, master string) error {
+func (n *node) slave(ctx context.Context, newMaster string) error {
 	if n.client == nil {
 		slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
 		return nil
 	}
 
-	return n.client.Do(ctx, n.client.B().Replicaof().Host(master).Port(n.port).Build()).Error()
+	if n.roleCache.IsSlaveOf(newMaster) {
+		return nil
+	}
+
+	info, err := n.getReplicationInfo(ctx)
+	if err != nil {
+		return err
+	}
+	if slave == ParseValueFromInfo(info, role) && newMaster == ParseValueFromInfo(info, masterHost) {
+		n.roleCache.Save(slave, newMaster)
+		return nil
+	}
+
+	err = n.client.Do(ctx, n.client.B().Replicaof().Host(newMaster).Port(n.port).Build()).Error()
+	if err != nil {
+		return err
+	}
+	n.roleCache.Save(slave, newMaster)
+	return nil
+}
+
+// Fetch the replication information from valkey
+func (n *node) getReplicationInfo(ctx context.Context) (string, error) {
+	return n.client.Do(ctx, n.client.B().Info().Section("replication").Build()).ToString()
 }
 
 // Close the open client
@@ -80,4 +133,39 @@ func (n *node) close() {
 		n.client.Close()
 		n.client = nil
 	}
+}
+
+type roleCache struct {
+	role       string
+	masterHost string
+
+	expire time.Time
+}
+
+// Save the current role and masterHost to the cache.
+// Resets the cache expire time
+func (rc *roleCache) Save(role, masterHost string) {
+	rc.role = role
+	rc.masterHost = masterHost
+	rc.expire = time.Now().Add(time.Minute)
+}
+
+func (rc *roleCache) isExpired() bool {
+	return time.Now().After(rc.expire)
+}
+
+// Check if the current cache is a master
+func (rc *roleCache) IsMaster() bool {
+	if rc.isExpired() {
+		return false
+	}
+	return rc.role == master
+}
+
+// Check if the current cache is a slave of the given master_host
+func (rc *roleCache) IsSlaveOf(masterHost string) bool {
+	if rc.isExpired() {
+		return false
+	}
+	return rc.role == slave && rc.masterHost == masterHost
 }
