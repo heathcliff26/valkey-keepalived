@@ -59,7 +59,7 @@
 				
 				<option value="file1">github.com/heathcliff26/valkey-keepalived/pkg/config/config.go (100.0%)</option>
 				
-				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (89.7%)</option>
+				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (92.6%)</option>
 				
 				<option value="file3">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/config.go (100.0%)</option>
 				
@@ -403,7 +403,7 @@ func (c *FailoverClient) Run() <span class="cov8" title="1">{
                                         found = true
                                 }</span>
                         }
-                        <span class="cov8" title="1">if !found </span><span class="cov0" title="0">{
+                        <span class="cov8" title="1">if !found </span><span class="cov8" title="1">{
                                 slog.Error("Could not find the current masters addr", slog.String(runID, currentMaster))
                                 continue</span>
                         } else<span class="cov8" title="1"> {
