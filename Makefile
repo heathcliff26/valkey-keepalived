@@ -40,6 +40,10 @@ fmt:
 validate:
 	hack/validate.sh
 
+# Scan code for vulnerabilities using gosec
+gosec:
+	gosec ./...
+
 # Clean up build artifacts
 clean:
 	hack/clean.sh
@@ -66,6 +70,7 @@ help:
 	lint \
 	fmt \
 	validate \
+	gosec \
 	clean \
 	golangci-lint \
 	help \
