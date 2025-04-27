@@ -33,7 +33,9 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient {
 		DisableRetry: true,
 	}
 	if cfg.TLS {
-		option.TLSConfig = &tls.Config{}
+		option.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
 	}
 
 	nodes := make([]*node, len(cfg.Nodes))

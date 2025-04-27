@@ -17,6 +17,7 @@ func findContainerRuntime() string {
 		if err != nil {
 			continue
 		}
+		// #nosec G204: Path of container runtime is determined dynamically and based of PATH.
 		err = exec.Command(path, "ps").Run()
 		if err == nil {
 			fmt.Printf("Found container runtime %s, path=%s\n", cmd, path)
@@ -49,6 +50,7 @@ func GetCommand(args ...string) *exec.Cmd {
 		args = append([]string{containerRuntime}, args...)
 		return exec.Command("sudo", args...)
 	}
+	// #nosec G204: Path of container runtime is determined dynamically and based of PATH.
 	return exec.Command(containerRuntime, args...)
 }
 
