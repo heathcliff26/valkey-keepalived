@@ -217,6 +217,7 @@ func LoadConfig(path string, env bool) (Config, error) <span class="cov8" title=
                 path = DEFAULT_CONFIG_PATH
         }</span>
 
+        // #nosec G304: Local users can decide on the config file path freely.
         <span class="cov8" title="1">f, err := os.ReadFile(path)
         if err != nil </span><span class="cov8" title="1">{
                 return Config{}, err
@@ -297,7 +298,9 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient <span class="cov8" titl
                 DisableRetry: true,
         }
         if cfg.TLS </span><span class="cov0" title="0">{
-                option.TLSConfig = &amp;tls.Config{}
+                option.TLSConfig = &amp;tls.Config{
+                        MinVersion: tls.VersionTLS12,
+                }
         }</span>
 
         <span class="cov8" title="1">nodes := make([]*node, len(cfg.Nodes))
