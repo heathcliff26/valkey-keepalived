@@ -6,8 +6,8 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/valkey-io/valkey-go v1.0.62
-	sigs.k8s.io/yaml v1.5.0
+	github.com/valkey-io/valkey-go v1.0.63
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
