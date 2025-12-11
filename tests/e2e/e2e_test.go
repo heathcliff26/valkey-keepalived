@@ -8,7 +8,7 @@ import (
 
 	failoverclient "github.com/heathcliff26/valkey-keepalived/pkg/failover-client"
 	"github.com/heathcliff26/valkey-keepalived/tests/utils"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -31,43 +31,31 @@ valkey:
 `
 
 func TestE2E(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	ctx := t.Context()
 
 	err := utils.ExecCRI("build", "-t", containerImage, "../..")
-	if !assert.NoError(err, "Should build container image") {
-		t.FailNow()
-	}
+	require.NoError(err, "Should build container image")
 
 	setup, virtualAddress, nodes, err := utils.NewFailoverSetup("e2e", 2)
-	if !assert.NoError(err, "Should create test setup") {
-		t.FailNow()
-	}
+	require.NoError(err, "Should create test setup")
 	t.Cleanup(setup.Cleanup)
 
 	cfg := fmt.Sprintf(valkeyKeepalivedConfigTemplate, virtualAddress, nodes[0], nodes[1])
 	cfgFile, err := os.CreateTemp("", "test-e2e-*.yaml")
-	if !assert.NoError(err, "Should create config file") {
-		t.FailNow()
-	}
+	require.NoError(err, "Should create config file")
 	t.Cleanup(func() {
 		cfgFile.Close()
 		os.Remove(cfgFile.Name())
 	})
 
 	_, err = cfgFile.WriteString(cfg)
-	if !assert.NoError(err, "Should write config to file") {
-		t.FailNow()
-	}
+	require.NoError(err, "Should write config to file")
 	err = cfgFile.Chmod(0644)
-	if !assert.NoError(err, "Should add read permissions to config file") {
-		t.FailNow()
-	}
+	require.NoError(err, "Should add read permissions to config file")
 
 	err = utils.ExecCRI("run", "-d", "--rm", "--name", containerName, "-v", cfgFile.Name()+":/config/config.yaml:z", containerImage)
-	if !assert.NoError(err, "Should start valkey-keepalived container") {
-		t.FailNow()
-	}
+	require.NoError(err, "Should start valkey-keepalived container")
 	t.Cleanup(func() {
 		_ = utils.ExecCRI("stop", containerName)
 	})
@@ -79,10 +67,9 @@ func TestE2E(t *testing.T) {
 			DisableRetry: true,
 		}
 		c, err := valkey.NewClient(opt)
-		if !assert.NoErrorf(err, "Should create client for node %d", i) {
-			t.FailNow()
-		}
-		ok := assert.Eventually(func() bool {
+		require.NoErrorf(err, "Should create client for node %d", i)
+
+		require.Eventually(func() bool {
 			res, err := c.Do(ctx, c.B().Info().Section("replication").Build()).ToString()
 			if err != nil {
 				t.Logf("Failed to connect to node %d: %v", i, err)
@@ -100,8 +87,5 @@ func TestE2E(t *testing.T) {
 			}
 			return true
 		}, waitTimeout, checkIntervall, "Should connect to node %d and verify that it has the expected role")
-		if !ok {
-			t.FailNow()
-		}
 	}
 }

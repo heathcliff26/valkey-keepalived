@@ -6,6 +6,7 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -30,12 +31,11 @@ func TestNodeConnect(t *testing.T) {
 
 func TestNodePing(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 	ctx := t.Context()
 
 	mr, n, err := newNodeWithMiniredis(t)
-	if !assert.NoError(err, "Should create node with client") {
-		t.FailNow()
-	}
+	require.NoError(err, "Should create node with client")
 
 	n.ping(ctx)
 	assert.NotNil(n.client, "Node should retain client")
@@ -54,11 +54,10 @@ func TestNodeMaster(t *testing.T) {
 	})
 	t.Run("CacheHit", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
 
 		mr, n, err := newNodeWithMiniredis(t)
-		if !assert.NoError(err, "Should create node with client") {
-			t.FailNow()
-		}
+		require.NoError(err, "Should create node with client")
 
 		mr.Close()
 		n.roleCache.Save(master, "")
@@ -67,11 +66,10 @@ func TestNodeMaster(t *testing.T) {
 	})
 	t.Run("CacheExpired", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
 
 		mr, n, err := newNodeWithMiniredis(t)
-		if !assert.NoError(err, "Should create node with client") {
-			t.FailNow()
-		}
+		require.NoError(err, "Should create node with client")
 
 		mr.Close()
 		n.roleCache.Save(master, "")
@@ -81,11 +79,10 @@ func TestNodeMaster(t *testing.T) {
 	})
 	t.Run("CacheEmpty", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
 
 		mr, n, err := newNodeWithMiniredis(t)
-		if !assert.NoError(err, "Should create node with client") {
-			t.FailNow()
-		}
+		require.NoError(err, "Should create node with client")
 
 		mr.Close()
 
@@ -100,11 +97,10 @@ func TestNodeSlave(t *testing.T) {
 	})
 	t.Run("CacheHit", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
 
 		mr, n, err := newNodeWithMiniredis(t)
-		if !assert.NoError(err, "Should create node with client") {
-			t.FailNow()
-		}
+		require.NoError(err, "Should create node with client")
 
 		mr.Close()
 		n.roleCache.Save(slave, "testmaster")
@@ -113,11 +109,10 @@ func TestNodeSlave(t *testing.T) {
 	})
 	t.Run("CacheExpired", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
 
 		mr, n, err := newNodeWithMiniredis(t)
-		if !assert.NoError(err, "Should create node with client") {
-			t.FailNow()
-		}
+		require.NoError(err, "Should create node with client")
 
 		mr.Close()
 		n.roleCache.Save(slave, "testmaster")
@@ -127,11 +122,10 @@ func TestNodeSlave(t *testing.T) {
 	})
 	t.Run("CacheEmpty", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
 
 		mr, n, err := newNodeWithMiniredis(t)
-		if !assert.NoError(err, "Should create node with client") {
-			t.FailNow()
-		}
+		require.NoError(err, "Should create node with client")
 
 		mr.Close()
 
@@ -145,9 +139,7 @@ func TestNodeCacheSave(t *testing.T) {
 
 	for i, n := range c.nodes {
 		err := n.connect(t.Context(), valkey.ClientOption{})
-		if !assert.NoErrorf(t, err, "Should connect to node %d", i) {
-			t.FailNow()
-		}
+		require.NoErrorf(t, err, "Should connect to node %d", i)
 	}
 
 	t.Run("Master", func(t *testing.T) {
