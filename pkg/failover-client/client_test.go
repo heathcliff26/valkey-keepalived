@@ -18,6 +18,34 @@ const (
 	checkIntervall = time.Second
 )
 
+func TestNewFailoverClient(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	cfg := ValkeyConfig{
+		VirtualAddress: "VAddress",
+		Port:           6379,
+		Nodes:          []string{"node1:6380", "node2"},
+		Username:       "user",
+		Password:       "pass",
+		TLS:            true,
+	}
+
+	client := NewFailoverClient(cfg)
+
+	assert.Equal(cfg.VirtualAddress, client.virtualAddress, "Virtual address should be set")
+	assert.Equal(cfg.Port, client.port, "Port should be set")
+	assert.Equal(cfg.Username, client.clientOption.Username, "Username should be set")
+	assert.Equal(cfg.Password, client.clientOption.Password, "Password should be set")
+	assert.NotNil(client.clientOption.TLSConfig, "TLS config should be set")
+
+	require.Equal(len(cfg.Nodes), len(client.nodes), "Should have correct number of nodes")
+	assert.Equal("node1", client.nodes[0].address, "Node 1 address should be set correctly")
+	assert.Equal(int64(6380), client.nodes[0].port, "Node 1 port should be set correctly")
+	assert.Equal("node2", client.nodes[1].address, "Node 2 address should be set correctly")
+	assert.Equal(int64(6379), client.nodes[1].port, "Node 2 port should be set to default")
+}
+
 func TestClientBasicFailover(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
