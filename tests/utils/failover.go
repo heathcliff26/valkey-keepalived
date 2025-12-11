@@ -13,7 +13,7 @@ const haproxyConfigTemplate = `global
 		timeout connect 1s
 		timeout server 1s
 
-	frontend valkey
+	frontend valkey-failover
 		mode tcp
 		bind :6379
 		default_backend valkey
