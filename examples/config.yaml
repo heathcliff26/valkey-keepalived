@@ -11,7 +11,8 @@ valkey:
   # The individual addresses of the nodes.
   nodes:
     - "node1"
-    - "node2"
+    # Node with custom port
+    - "node2:1234"
   # (Optional) The username for logging into valkey
   username: ""
   # (Optional) The password for logging into valkey

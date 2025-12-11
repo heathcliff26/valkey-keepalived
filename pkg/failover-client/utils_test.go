@@ -16,3 +16,47 @@ func TestParseValueFromInfo(t *testing.T) {
 
 	assert.Equal("", ParseValueFromInfo("", "not-a-key"), "Should return an empty string if no value is found")
 }
+
+func TestExtractPortFromAddress(t *testing.T) {
+	tMatrix := map[string]struct {
+		address     string
+		defaultPort int64
+		expHost     string
+		expPort     int64
+	}{
+		"WithPort": {
+			address:     "node1:6379",
+			defaultPort: 1234,
+			expHost:     "node1",
+			expPort:     6379,
+		},
+		"NoPort": {
+			address:     "node2",
+			defaultPort: 1234,
+			expHost:     "node2",
+			expPort:     1234,
+		},
+		"IPv6WithPort": {
+			address:     "[2001:0db8:85a3:0000:0000:8a2e:0370:7334]:6380",
+			defaultPort: 1234,
+			expHost:     "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+			expPort:     6380,
+		},
+		"IPv6NoPort": {
+			address:     "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+			defaultPort: 1234,
+			expHost:     "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+			expPort:     1234,
+		},
+	}
+
+	for name, tCase := range tMatrix {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			host, port := extractPortFromAddress(tCase.address, tCase.defaultPort)
+			assert.Equal(tCase.expHost, host, "Should extract expected host")
+			assert.Equal(tCase.expPort, port, "Should extract expected port")
+		})
+	}
+}

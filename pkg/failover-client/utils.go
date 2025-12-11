@@ -3,6 +3,8 @@ package failoverclient
 import (
 	"fmt"
 	"log/slog"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/valkey-io/valkey-go"
@@ -29,4 +31,18 @@ func ParseValueFromInfo(info string, key string) string {
 
 	slog.Error("Could not find the requested key in info", "info", info, "key", key)
 	return ""
+}
+
+// Extract the host and port from an address string.
+// Returns default port if no port is found.
+func extractPortFromAddress(address string, defaultPort int64) (string, int64) {
+	host, portStr, err := net.SplitHostPort(address)
+	if err != nil {
+		return address, defaultPort
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return address, defaultPort
+	}
+	return host, int64(port)
 }

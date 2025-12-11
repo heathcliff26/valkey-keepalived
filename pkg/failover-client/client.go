@@ -41,9 +41,10 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient {
 	nodes := make([]*node, len(cfg.Nodes))
 
 	for i, addr := range cfg.Nodes {
+		host, port := extractPortFromAddress(addr, cfg.Port)
 		nodes[i] = &node{
-			address:   addr,
-			port:      cfg.Port,
+			address:   host,
+			port:      port,
 			up:        true,
 			roleCache: &roleCache{},
 		}
