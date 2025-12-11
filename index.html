@@ -59,13 +59,13 @@
 				
 				<option value="file1">github.com/heathcliff26/valkey-keepalived/pkg/config/config.go (100.0%)</option>
 				
-				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (89.7%)</option>
+				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (91.3%)</option>
 				
 				<option value="file3">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/config.go (100.0%)</option>
 				
 				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (93.9%)</option>
 				
-				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (100.0%)</option>
+				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (94.4%)</option>
 				
 				<option value="file6">github.com/heathcliff26/valkey-keepalived/pkg/version/version.go (81.0%)</option>
 				
@@ -297,7 +297,7 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient <span class="cov8" titl
                 DisableCache: true,
                 DisableRetry: true,
         }
-        if cfg.TLS </span><span class="cov0" title="0">{
+        if cfg.TLS </span><span class="cov8" title="1">{
                 option.TLSConfig = &amp;tls.Config{
                         MinVersion: tls.VersionTLS12,
                 }
@@ -306,9 +306,10 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient <span class="cov8" titl
         <span class="cov8" title="1">nodes := make([]*node, len(cfg.Nodes))
 
         for i, addr := range cfg.Nodes </span><span class="cov8" title="1">{
+                host, port := extractPortFromAddress(addr, cfg.Port)
                 nodes[i] = &amp;node{
-                        address:   addr,
-                        port:      cfg.Port,
+                        address:   host,
+                        port:      port,
                         up:        true,
                         roleCache: &amp;roleCache{},
                 }
@@ -648,6 +649,8 @@ func (rc *roleCache) IsSlaveOf(masterHost string) bool <span class="cov8" title=
 import (
         "fmt"
         "log/slog"
+        "net"
+        "strconv"
         "strings"
 
         "github.com/valkey-io/valkey-go"
@@ -674,6 +677,20 @@ func ParseValueFromInfo(info string, key string) string <span class="cov8" title
 
         <span class="cov8" title="1">slog.Error("Could not find the requested key in info", "info", info, "key", key)
         return ""</span>
+}
+
+// Extract the host and port from an address string.
+// Returns default port if no port is found.
+func extractPortFromAddress(address string, defaultPort int64) (string, int64) <span class="cov8" title="1">{
+        host, portStr, err := net.SplitHostPort(address)
+        if err != nil </span><span class="cov8" title="1">{
+                return address, defaultPort
+        }</span>
+        <span class="cov8" title="1">port, err := strconv.Atoi(portStr)
+        if err != nil </span><span class="cov0" title="0">{
+                return address, defaultPort
+        }</span>
+        <span class="cov8" title="1">return host, int64(port)</span>
 }
 </pre>
 		
