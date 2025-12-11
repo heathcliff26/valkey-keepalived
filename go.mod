@@ -4,9 +4,9 @@ go 1.24.0
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	github.com/valkey-io/valkey-go v1.0.68
+	github.com/valkey-io/valkey-go v1.0.69
 	sigs.k8s.io/yaml v1.6.0
 )
 
