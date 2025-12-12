@@ -24,10 +24,11 @@ const (
 
 const valkeyKeepalivedConfigTemplate = `logLevel: debug
 valkey:
-  virtualAddress: "%s"
+  virtualAddress: "localhost"
+  port: %d
   nodes:
-    - "%s"
-    - "%s"
+    - "localhost:%d"
+    - "localhost:%d"
 `
 
 func TestE2E(t *testing.T) {
@@ -37,11 +38,11 @@ func TestE2E(t *testing.T) {
 	err := utils.ExecCRI("build", "-t", containerImage, "../..")
 	require.NoError(err, "Should build container image")
 
-	setup, virtualAddress, nodes, err := utils.NewFailoverSetup("e2e", 2)
+	setup, err := utils.NewFailoverSetup("e2e", 2)
 	require.NoError(err, "Should create test setup")
 	t.Cleanup(setup.Cleanup)
 
-	cfg := fmt.Sprintf(valkeyKeepalivedConfigTemplate, virtualAddress, nodes[0], nodes[1])
+	cfg := fmt.Sprintf(valkeyKeepalivedConfigTemplate, setup.Port, setup.Nodes[0].Port, setup.Nodes[1].Port)
 	cfgFile, err := os.CreateTemp("", "test-e2e-*.yaml")
 	require.NoError(err, "Should create config file")
 	t.Cleanup(func() {
@@ -54,15 +55,15 @@ func TestE2E(t *testing.T) {
 	err = cfgFile.Chmod(0644)
 	require.NoError(err, "Should add read permissions to config file")
 
-	err = utils.ExecCRI("run", "-d", "--rm", "--name", containerName, "-v", cfgFile.Name()+":/config/config.yaml:z", containerImage)
+	err = utils.ExecCRI("run", "-d", "--rm", "--name", containerName, "-v", cfgFile.Name()+":/config/config.yaml:z", "--net", "host", containerImage)
 	require.NoError(err, "Should start valkey-keepalived container")
 	t.Cleanup(func() {
 		_ = utils.ExecCRI("stop", containerName)
 	})
 
-	for i, node := range nodes {
+	for i, node := range setup.Nodes {
 		opt := valkey.ClientOption{
-			InitAddress:  []string{node + ":6379"},
+			InitAddress:  []string{fmt.Sprintf("127.0.0.1:%d", node.Port)},
 			DisableCache: true,
 			DisableRetry: true,
 		}

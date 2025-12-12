@@ -16,6 +16,7 @@ const (
 	runID      = "run_id"
 	role       = "role"
 	masterHost = "master_host"
+	masterPort = "master_port"
 )
 
 type node struct {
@@ -85,7 +86,7 @@ func (n *node) master(ctx context.Context) error {
 		return err
 	}
 	if ParseValueFromInfo(info, role) == master {
-		n.roleCache.Save(master, "")
+		n.roleCache.Save(master, nil)
 		return nil
 	}
 
@@ -93,12 +94,12 @@ func (n *node) master(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.roleCache.Save(master, "")
+	n.roleCache.Save(master, nil)
 	return nil
 }
 
 // Make this node a slave of the given master
-func (n *node) slave(ctx context.Context, newMaster string) error {
+func (n *node) slave(ctx context.Context, newMaster *node) error {
 	if n.client == nil {
 		slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
 		return nil
@@ -112,12 +113,12 @@ func (n *node) slave(ctx context.Context, newMaster string) error {
 	if err != nil {
 		return err
 	}
-	if slave == ParseValueFromInfo(info, role) && newMaster == ParseValueFromInfo(info, masterHost) {
+	if infoSlaveOfNode(info, newMaster) {
 		n.roleCache.Save(slave, newMaster)
 		return nil
 	}
 
-	err = n.client.Do(ctx, n.client.B().Replicaof().Host(newMaster).Port(n.port).Build()).Error()
+	err = n.client.Do(ctx, n.client.B().Replicaof().Host(newMaster.address).Port(newMaster.port).Build()).Error()
 	if err != nil {
 		return err
 	}
@@ -139,17 +140,17 @@ func (n *node) close() {
 }
 
 type roleCache struct {
-	role       string
-	masterHost string
+	role   string
+	master *node
 
 	expire time.Time
 }
 
 // Save the current role and masterHost to the cache.
 // Resets the cache expire time
-func (rc *roleCache) Save(role, masterHost string) {
+func (rc *roleCache) Save(role string, master *node) {
 	rc.role = role
-	rc.masterHost = masterHost
+	rc.master = master
 	rc.expire = time.Now().Add(time.Minute)
 }
 
@@ -166,9 +167,9 @@ func (rc *roleCache) IsMaster() bool {
 }
 
 // Check if the current cache is a slave of the given master_host
-func (rc *roleCache) IsSlaveOf(masterHost string) bool {
-	if rc.isExpired() {
+func (rc *roleCache) IsSlaveOf(master *node) bool {
+	if rc.isExpired() || master == nil {
 		return false
 	}
-	return rc.role == slave && rc.masterHost == masterHost
+	return rc.role == slave && rc.master != nil && rc.master.address == master.address && rc.master.port == master.port
 }

@@ -2,6 +2,7 @@ package failoverclient
 
 import (
 	"context"
+	"fmt"
 	"syscall"
 	"testing"
 	"time"
@@ -58,30 +59,30 @@ func TestClientBasicFailover(t *testing.T) {
 	})
 
 	require.Eventually(func() bool {
-		return c.masterAddr != ""
+		return c.masterNode != nil
 	}, waitTimeout, checkIntervall, "Client should start and find current master")
 
 	for i, n := range c.nodes {
 		if i == 0 {
-			assertNodeRoleEventually(t, ctx, n, master, "", i)
+			assertNodeRoleEventually(t, ctx, n, master, nil, i)
 		} else {
-			assertNodeRoleEventually(t, ctx, n, slave, c.masterAddr, i)
+			assertNodeRoleEventually(t, ctx, n, slave, c.masterNode, i)
 		}
 	}
 
-	oldMaster := c.masterAddr
+	oldMaster := c.masterNode
 
 	err := setup.StopNode(0)
 	require.NoError(err, "Should stop the first node")
 
 	assert.Eventually(func() bool {
-		return c.masterAddr != oldMaster
+		return c.masterNode != oldMaster
 	}, waitTimeout, checkIntervall, "Should fail over to new master")
 
 	assertNodeDown(t, c.nodes[0], 0)
 
-	assertNodeRoleEventually(t, ctx, c.nodes[1], master, "", 1)
-	assertNodeRoleEventually(t, ctx, c.nodes[2], slave, c.masterAddr, 2)
+	assertNodeRoleEventually(t, ctx, c.nodes[1], master, nil, 1)
+	assertNodeRoleEventually(t, ctx, c.nodes[2], slave, c.masterNode, 2)
 }
 
 func TestNodeRecoveryScenario(t *testing.T) {
@@ -99,23 +100,21 @@ func TestNodeRecoveryScenario(t *testing.T) {
 	})
 
 	require.Eventually(func() bool {
-		return c.masterAddr != ""
+		return c.masterNode != nil
 	}, waitTimeout, checkIntervall, "Client should start and find current master")
 
-	assertNodeRoleEventually(t, ctx, c.nodes[0], master, "", 0)
+	assertNodeRoleEventually(t, ctx, c.nodes[0], master, nil, 0)
 
-	assertNodeRoleEventually(t, ctx, c.nodes[2], slave, c.masterAddr, 2)
+	assertNodeRoleEventually(t, ctx, c.nodes[2], slave, c.masterNode, 2)
 
 	err = setup.StartNode(1)
 	require.NoError(err, "should start node 1")
-	c.nodes[1].address, err = testutils.GetContainerIP(setup.Nodes[1])
-	require.NoError(err, "Should get ip of node 1")
 
 	require.Eventually(func() bool {
 		return c.nodes[1].up
 	}, waitTimeout, checkIntervall, "Node 1 should come back up")
 
-	assertNodeRoleEventually(t, ctx, c.nodes[1], slave, c.masterAddr, 1)
+	assertNodeRoleEventually(t, ctx, c.nodes[1], slave, c.masterNode, 1)
 }
 
 func TestReplication(t *testing.T) {
@@ -129,7 +128,7 @@ func TestReplication(t *testing.T) {
 	})
 
 	require.Eventually(func() bool {
-		return c.masterAddr != ""
+		return c.masterNode != nil
 	}, waitTimeout, checkIntervall, "Client should start and find current master")
 
 	k, v := "testreplicationkey", "testreplicationvalue"
@@ -186,14 +185,17 @@ func newSetupAndClient(t *testing.T, prefix string, nodeCount int) (*testutils.F
 		t.Skip("No container runtime found")
 	}
 
-	setup, virtualIP, nodes, err := testutils.NewFailoverSetup(prefix, nodeCount)
+	setup, err := testutils.NewFailoverSetup(prefix, nodeCount)
 	require.NoError(t, err, "Should create setup")
 	t.Cleanup(setup.Cleanup)
 
 	cfg := ValkeyConfig{
-		VirtualAddress: virtualIP,
-		Port:           6379,
-		Nodes:          nodes,
+		VirtualAddress: setup.Address,
+		Port:           int64(setup.Port),
+		Nodes:          make([]string, len(setup.Nodes)),
+	}
+	for i, node := range setup.Nodes {
+		cfg.Nodes[i] = fmt.Sprintf("%s:%d", setup.Address, node.Port)
 	}
 	return setup, NewFailoverClient(cfg)
 }
@@ -211,7 +213,7 @@ func assertNodeDown(t *testing.T, n *node, id int) {
 	assert.Nil(t, n.client, "Node %d should not have a client", id)
 }
 
-func assertNodeRoleEventually(t *testing.T, ctx context.Context, n *node, expectedRole, masterAddr string, id int) {
+func assertNodeRoleEventually(t *testing.T, ctx context.Context, n *node, expectedRole string, masterNode *node, id int) {
 	assert.Eventuallyf(t, func() bool {
 		role, info, err := getRoleOfNode(ctx, n)
 		if err != nil {
@@ -222,8 +224,8 @@ func assertNodeRoleEventually(t *testing.T, ctx context.Context, n *node, expect
 		if role != expectedRole {
 			return false
 		}
-		if masterAddr != "" && masterAddr != ParseValueFromInfo(info, masterHost) {
-			t.Logf("Node %d has the wrong master, expected \"%s\" but has \"%s\"", id, masterAddr, ParseValueFromInfo(info, masterHost))
+		if masterNode != nil && !infoSlaveOfNode(info, masterNode) {
+			t.Logf("Node %d has the wrong master, expected \"%s:%d\" but has \"%s:%s\"", id, masterNode.address, masterNode.port, ParseValueFromInfo(info, masterHost), ParseValueFromInfo(info, masterPort))
 			return false
 		}
 		return true

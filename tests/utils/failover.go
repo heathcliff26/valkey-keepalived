@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 const haproxyConfigTemplate = `global
@@ -15,60 +16,73 @@ const haproxyConfigTemplate = `global
 
 	frontend valkey-failover
 		mode tcp
-		bind :6379
+		bind :%d
 		default_backend valkey
 
 	backend valkey
 		balance first
-`
+%s`
+
+type TestNode struct {
+	Name string
+	Port int
+}
 
 type FailoverSetup struct {
 	Prefix            string
-	Nodes             []string
+	Address           string
+	Port              int
+	Nodes             []TestNode
 	runningNodes      []bool
 	haproxyConfigPath string
 	runningHAProxy    bool
 }
 
-func NewFailoverSetup(prefix string, nodes int) (*FailoverSetup, string, []string, error) {
+func NewFailoverSetup(prefix string, nodes int) (*FailoverSetup, error) {
 	if prefix == "" {
-		return nil, "", nil, fmt.Errorf("need to provide a prefix")
+		return nil, fmt.Errorf("need to provide a prefix")
 	}
 	if nodes < 2 {
-		return nil, "", nil, fmt.Errorf("need at least 2 nodes")
+		return nil, fmt.Errorf("need at least 2 nodes")
 	}
 
 	res := &FailoverSetup{
 		Prefix:       prefix,
-		Nodes:        make([]string, nodes),
+		Nodes:        make([]TestNode, nodes),
 		runningNodes: make([]bool, nodes),
 	}
 
-	nodeIPs := make([]string, nodes)
-
-	haproxyCfg := haproxyConfigTemplate
+	var haproxyCfgBackend string
 
 	for i := range nodes {
-		res.Nodes[i] = fmt.Sprintf("%s-valkey-%d", prefix, i)
-		err := ExecCRI("run", "-d", "--name", res.Nodes[i], "docker.io/valkey/valkey:latest")
+		res.Nodes[i].Name = fmt.Sprintf("%s-valkey-%d", prefix, i)
+		port, err := findFreePort()
 		if err != nil {
 			res.Cleanup()
-			return nil, "", nil, err
+			return nil, err
+		}
+		err = ExecCRI("run", "-d", "--name", res.Nodes[i].Name, "--net", "host", "docker.io/valkey/valkey:latest", "valkey-server", "--port", strconv.Itoa(port))
+		if err != nil {
+			res.Cleanup()
+			return nil, err
 		}
 		res.runningNodes[i] = true
+		res.Nodes[i].Port = port
 
-		nodeIPs[i], err = GetContainerIP(res.Nodes[i])
-		if err != nil {
-			res.Cleanup()
-			return nil, "", nil, err
-		}
-		haproxyCfg += fmt.Sprintf("		server valkey-%s %s:6379 check\n", res.Nodes[i], nodeIPs[i])
+		haproxyCfgBackend += fmt.Sprintf("		server valkey-%s localhost:%d check\n", res.Nodes[i].Name, res.Nodes[i].Port)
 	}
+
+	port, err := findFreePort()
+	if err != nil {
+		res.Cleanup()
+		return nil, err
+	}
+	haproxyCfg := fmt.Sprintf(haproxyConfigTemplate, port, haproxyCfgBackend)
 
 	file, err := os.CreateTemp("", fmt.Sprintf("%s-*-haproxy.cfg", prefix))
 	if err != nil {
 		res.Cleanup()
-		return nil, "", nil, err
+		return nil, err
 	}
 	defer file.Close()
 
@@ -77,28 +91,24 @@ func NewFailoverSetup(prefix string, nodes int) (*FailoverSetup, string, []strin
 	_, err = file.WriteString(haproxyCfg)
 	if err != nil {
 		res.Cleanup()
-		return nil, "", nil, err
+		return nil, err
 	}
 	err = file.Chmod(0644)
 	if err != nil {
 		res.Cleanup()
-		return nil, "", nil, err
+		return nil, err
 	}
 
-	err = ExecCRI("run", "-d", "-v", fmt.Sprintf("%s:/usr/local/etc/haproxy/haproxy.cfg:z", file.Name()), "--name", fmt.Sprintf("%s-haproxy", prefix), "docker.io/library/haproxy:alpine")
+	err = ExecCRI("run", "-d", "-v", fmt.Sprintf("%s:/usr/local/etc/haproxy/haproxy.cfg:z", file.Name()), "--name", fmt.Sprintf("%s-haproxy", prefix), "--net", "host", "docker.io/library/haproxy:alpine")
 	if err != nil {
 		res.Cleanup()
-		return nil, "", nil, err
+		return nil, err
 	}
 	res.runningHAProxy = true
+	res.Port = port
+	res.Address = "localhost"
 
-	haproxyIP, err := GetContainerIP(fmt.Sprintf("%s-haproxy", prefix))
-	if err != nil {
-		res.Cleanup()
-		return nil, "", nil, err
-	}
-
-	return res, haproxyIP, nodeIPs, nil
+	return res, nil
 }
 
 func (s *FailoverSetup) StopNode(i int) error {
@@ -109,7 +119,7 @@ func (s *FailoverSetup) StopNode(i int) error {
 		return fmt.Errorf("node is already stopped")
 	}
 
-	err := ExecCRI("stop", s.Nodes[i])
+	err := ExecCRI("stop", s.Nodes[i].Name)
 
 	s.runningNodes[i] = err != nil
 	return err
@@ -123,7 +133,7 @@ func (s *FailoverSetup) StartNode(i int) error {
 		return fmt.Errorf("node is already running")
 	}
 
-	err := ExecCRI("start", s.Nodes[i])
+	err := ExecCRI("start", s.Nodes[i].Name)
 
 	s.runningNodes[i] = err == nil
 	return err
@@ -175,12 +185,12 @@ func (s *FailoverSetup) Cleanup() {
 		if s.runningNodes[i] {
 			err := s.StopNode(i)
 			if err != nil {
-				fmt.Printf("Failed to stop node %s: %v\n", node, err)
+				fmt.Printf("Failed to stop node %s: %v\n", node.Name, err)
 			}
 		}
-		err := ExecCRI("rm", node)
+		err := ExecCRI("rm", node.Name)
 		if err != nil {
-			fmt.Printf("Failed to remove node %s: %v\n", node, err)
+			fmt.Printf("Failed to remove node %s: %v\n", node.Name, err)
 		}
 	}
 

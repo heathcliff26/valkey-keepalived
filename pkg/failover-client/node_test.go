@@ -50,7 +50,9 @@ func TestNodePing(t *testing.T) {
 
 func TestNodeMaster(t *testing.T) {
 	t.Run("NoClient", func(t *testing.T) {
-		assert.Error(t, (&node{}).master(t.Context()), "Should not panic when client is nil")
+		assert.NotPanics(t, func() {
+			_ = (&node{}).master(t.Context())
+		}, "Should not panic when client is nil")
 	})
 	t.Run("CacheHit", func(t *testing.T) {
 		assert := assert.New(t)
@@ -60,7 +62,7 @@ func TestNodeMaster(t *testing.T) {
 		require.NoError(err, "Should create node with client")
 
 		mr.Close()
-		n.roleCache.Save(master, "")
+		n.roleCache.Save(master, nil)
 
 		assert.Nil(n.master(t.Context()), "Should hit cache and not attempt to connect to server")
 	})
@@ -72,7 +74,7 @@ func TestNodeMaster(t *testing.T) {
 		require.NoError(err, "Should create node with client")
 
 		mr.Close()
-		n.roleCache.Save(master, "")
+		n.roleCache.Save(master, nil)
 		n.roleCache.expire = time.Now().Add(-time.Minute)
 
 		assert.Error(n.master(t.Context()), "Should not hit the cache and error out instead")
@@ -93,7 +95,22 @@ func TestNodeMaster(t *testing.T) {
 
 func TestNodeSlave(t *testing.T) {
 	t.Run("NoClient", func(t *testing.T) {
-		assert.NoError(t, (&node{}).slave(t.Context(), "testmaster"), "Should not panic when client is nil")
+		assert.NotPanics(t, func() {
+			_ = (&node{}).slave(t.Context(), nil)
+		}, "Should not panic when client is nil")
+	})
+	t.Run("MasterNil", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+
+		mr, n, err := newNodeWithMiniredis(t)
+		require.NoError(err, "Should create node with client")
+		mr.Close()
+
+		n.roleCache.Save(slave, &node{address: "testmaster", port: 6379})
+		assert.NotPanics(func() {
+			_ = n.slave(t.Context(), nil)
+		}, "Should not panic when new master is nil")
 	})
 	t.Run("CacheHit", func(t *testing.T) {
 		assert := assert.New(t)
@@ -103,9 +120,9 @@ func TestNodeSlave(t *testing.T) {
 		require.NoError(err, "Should create node with client")
 
 		mr.Close()
-		n.roleCache.Save(slave, "testmaster")
+		n.roleCache.Save(slave, &node{})
 
-		assert.Nil(n.slave(t.Context(), "testmaster"), "Should hit cache and not attempt to connect to server")
+		assert.Nil(n.slave(t.Context(), &node{}), "Should hit cache and not attempt to connect to server")
 	})
 	t.Run("CacheExpired", func(t *testing.T) {
 		assert := assert.New(t)
@@ -115,10 +132,10 @@ func TestNodeSlave(t *testing.T) {
 		require.NoError(err, "Should create node with client")
 
 		mr.Close()
-		n.roleCache.Save(slave, "testmaster")
+		n.roleCache.Save(slave, &node{})
 		n.roleCache.expire = time.Now().Add(-time.Minute)
 
-		assert.Error(n.slave(t.Context(), "testmaster"), "Should not hit the cache and error out instead")
+		assert.Error(n.slave(t.Context(), &node{}), "Should not hit the cache and error out instead")
 	})
 	t.Run("CacheEmpty", func(t *testing.T) {
 		assert := assert.New(t)
@@ -129,7 +146,7 @@ func TestNodeSlave(t *testing.T) {
 
 		mr.Close()
 
-		assert.Error(n.slave(t.Context(), "testmaster"), "Should not hit the cache and error out instead")
+		assert.Error(n.slave(t.Context(), &node{}), "Should not hit the cache and error out instead")
 		assert.Empty(n.roleCache, "Should not save to cache on error")
 	})
 }
@@ -157,11 +174,11 @@ func TestNodeCacheSave(t *testing.T) {
 		assert := assert.New(t)
 		n := c.nodes[1]
 
-		err := n.slave(t.Context(), c.virtualAddress)
+		err := n.slave(t.Context(), c.nodes[0])
 
 		assert.NoError(err, "Should set node to slave")
 		assert.Equal(slave, n.roleCache.role, "Should save role in cache")
-		assert.Equal(c.virtualAddress, n.roleCache.masterHost, "Should save master_host in cache")
+		assert.Equal(c.nodes[0], n.roleCache.master, "Should save master_host in cache")
 		assert.NotEmpty(n.roleCache.expire, "Should set expire time")
 		assert.False(n.roleCache.isExpired(), "Cache should not be expired")
 	})
