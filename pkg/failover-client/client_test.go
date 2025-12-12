@@ -48,6 +48,7 @@ func TestNewFailoverClient(t *testing.T) {
 }
 
 func TestClientBasicFailover(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	require := require.New(t)
 	ctx := t.Context()
@@ -86,6 +87,7 @@ func TestClientBasicFailover(t *testing.T) {
 }
 
 func TestNodeRecoveryScenario(t *testing.T) {
+	t.Parallel()
 	require := require.New(t)
 	ctx := t.Context()
 
@@ -118,6 +120,7 @@ func TestNodeRecoveryScenario(t *testing.T) {
 }
 
 func TestReplication(t *testing.T) {
+	t.Parallel()
 	require := require.New(t)
 	ctx := t.Context()
 
