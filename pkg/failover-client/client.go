@@ -19,7 +19,7 @@ type FailoverClient struct {
 	virtualAddress string
 	port           int64
 	currentMaster  string
-	masterAddr     string
+	masterNode     *node
 
 	quit chan os.Signal
 }
@@ -138,7 +138,7 @@ func (c *FailoverClient) Run() {
 			for _, n := range c.nodes {
 				if n.runID == currentMaster {
 					c.currentMaster = currentMaster
-					c.masterAddr = n.address
+					c.masterNode = n
 					found = true
 				}
 			}
@@ -146,7 +146,7 @@ func (c *FailoverClient) Run() {
 				slog.Error("Could not find the current masters addr", slog.String(runID, currentMaster))
 				continue
 			} else {
-				slog.Info("Switching over to new master", slog.String("addr", c.masterAddr), slog.String(runID, c.currentMaster))
+				slog.Info("Switching over to new master", slog.String("addr", c.masterNode.address), slog.Int64("port", c.masterNode.port), slog.String(runID, c.currentMaster))
 			}
 		}
 
@@ -157,7 +157,7 @@ func (c *FailoverClient) Run() {
 					slog.Error("Failed to update node to master", slog.String("node", n.address), "err", err)
 				}
 			} else {
-				err := n.slave(ctx, c.masterAddr)
+				err := n.slave(ctx, c.masterNode)
 				if err != nil {
 					slog.Error("Failed to update node to slave", slog.String("node", n.address), "err", err)
 				}

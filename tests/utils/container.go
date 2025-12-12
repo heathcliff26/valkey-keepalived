@@ -12,7 +12,7 @@ var (
 )
 
 func findContainerRuntime() string {
-	for _, cmd := range []string{"docker", "podman"} {
+	for _, cmd := range []string{"podman", "docker"} {
 		path, err := exec.LookPath(cmd)
 		if err != nil {
 			continue
@@ -36,20 +36,7 @@ func HasContainerRuntimer() bool {
 	return containerRuntime != ""
 }
 
-func GetContainerIP(name string) (string, error) {
-	cmd := GetCommand("container", "inspect", "-f", "'{{.NetworkSettings.IPAddress}}'", name)
-	buf, err := cmd.Output()
-
-	res, _ := strings.CutSuffix(string(buf), "\n")
-	res = strings.ReplaceAll(res, "'", "")
-	return res, err
-}
-
 func GetCommand(args ...string) *exec.Cmd {
-	if strings.Contains(containerRuntime, "podman") {
-		args = append([]string{containerRuntime}, args...)
-		return exec.Command("sudo", args...)
-	}
 	// #nosec G204: Path of container runtime is determined dynamically and based of PATH.
 	return exec.Command(containerRuntime, args...)
 }

@@ -46,3 +46,15 @@ func extractPortFromAddress(address string, defaultPort int64) (string, int64) {
 	}
 	return host, int64(port)
 }
+
+// Check if the given info string shows that the node is slave of the given node
+func infoSlaveOfNode(info string, n *node) bool {
+	if n == nil {
+		return false
+	}
+	currentRole := ParseValueFromInfo(info, role)
+	addr := ParseValueFromInfo(info, masterHost)
+	portStr := ParseValueFromInfo(info, masterPort)
+
+	return currentRole == slave && addr == n.address && portStr == strconv.FormatInt(n.port, 10)
+}
