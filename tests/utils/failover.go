@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 )
 
 const haproxyConfigTemplate = `global
@@ -23,6 +24,8 @@ const haproxyConfigTemplate = `global
 		balance first
 %s`
 
+var setupLock sync.Mutex
+
 type TestNode struct {
 	Name string
 	Port int
@@ -38,6 +41,8 @@ type FailoverSetup struct {
 	runningHAProxy    bool
 }
 
+// Create a new test setup, spawning containers.
+// To ensure no port/image pull collisions occur, this function can only run one at a time through a global lock.
 func NewFailoverSetup(prefix string, nodes int) (*FailoverSetup, error) {
 	if prefix == "" {
 		return nil, fmt.Errorf("need to provide a prefix")
@@ -45,6 +50,9 @@ func NewFailoverSetup(prefix string, nodes int) (*FailoverSetup, error) {
 	if nodes < 2 {
 		return nil, fmt.Errorf("need at least 2 nodes")
 	}
+
+	setupLock.Lock()
+	defer setupLock.Unlock()
 
 	res := &FailoverSetup{
 		Prefix:       prefix,
