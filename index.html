@@ -65,7 +65,7 @@
 				
 				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (93.9%)</option>
 				
-				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (94.4%)</option>
+				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (100.0%)</option>
 				
 				<option value="file6">github.com/heathcliff26/valkey-keepalived/pkg/version/version.go (81.0%)</option>
 				
@@ -284,7 +284,7 @@ type FailoverClient struct {
         virtualAddress string
         port           int64
         currentMaster  string
-        masterAddr     string
+        masterNode     *node
 
         quit chan os.Signal
 }
@@ -403,7 +403,7 @@ func (c *FailoverClient) Run() <span class="cov8" title="1">{
                         for _, n := range c.nodes </span><span class="cov8" title="1">{
                                 if n.runID == currentMaster </span><span class="cov8" title="1">{
                                         c.currentMaster = currentMaster
-                                        c.masterAddr = n.address
+                                        c.masterNode = n
                                         found = true
                                 }</span>
                         }
@@ -411,7 +411,7 @@ func (c *FailoverClient) Run() <span class="cov8" title="1">{
                                 slog.Error("Could not find the current masters addr", slog.String(runID, currentMaster))
                                 continue</span>
                         } else<span class="cov8" title="1"> {
-                                slog.Info("Switching over to new master", slog.String("addr", c.masterAddr), slog.String(runID, c.currentMaster))
+                                slog.Info("Switching over to new master", slog.String("addr", c.masterNode.address), slog.Int64("port", c.masterNode.port), slog.String(runID, c.currentMaster))
                         }</span>
                 }
 
@@ -422,7 +422,7 @@ func (c *FailoverClient) Run() <span class="cov8" title="1">{
                                         slog.Error("Failed to update node to master", slog.String("node", n.address), "err", err)
                                 }</span>
                         } else<span class="cov8" title="1"> {
-                                err := n.slave(ctx, c.masterAddr)
+                                err := n.slave(ctx, c.masterNode)
                                 if err != nil </span><span class="cov0" title="0">{
                                         slog.Error("Failed to update node to slave", slog.String("node", n.address), "err", err)
                                 }</span>
@@ -486,6 +486,7 @@ const (
         runID      = "run_id"
         role       = "role"
         masterHost = "master_host"
+        masterPort = "master_port"
 )
 
 type node struct {
@@ -555,7 +556,7 @@ func (n *node) master(ctx context.Context) error <span class="cov8" title="1">{
                 return err
         }</span>
         <span class="cov8" title="1">if ParseValueFromInfo(info, role) == master </span><span class="cov8" title="1">{
-                n.roleCache.Save(master, "")
+                n.roleCache.Save(master, nil)
                 return nil
         }</span>
 
@@ -563,12 +564,12 @@ func (n *node) master(ctx context.Context) error <span class="cov8" title="1">{
         if err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
-        <span class="cov8" title="1">n.roleCache.Save(master, "")
+        <span class="cov8" title="1">n.roleCache.Save(master, nil)
         return nil</span>
 }
 
 // Make this node a slave of the given master
-func (n *node) slave(ctx context.Context, newMaster string) error <span class="cov8" title="1">{
+func (n *node) slave(ctx context.Context, newMaster *node) error <span class="cov8" title="1">{
         if n.client == nil </span><span class="cov8" title="1">{
                 slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
                 return nil
@@ -582,12 +583,12 @@ func (n *node) slave(ctx context.Context, newMaster string) error <span class="c
         if err != nil </span><span class="cov8" title="1">{
                 return err
         }</span>
-        <span class="cov8" title="1">if slave == ParseValueFromInfo(info, role) &amp;&amp; newMaster == ParseValueFromInfo(info, masterHost) </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if infoSlaveOfNode(info, newMaster) </span><span class="cov0" title="0">{
                 n.roleCache.Save(slave, newMaster)
                 return nil
         }</span>
 
-        <span class="cov8" title="1">err = n.client.Do(ctx, n.client.B().Replicaof().Host(newMaster).Port(n.port).Build()).Error()
+        <span class="cov8" title="1">err = n.client.Do(ctx, n.client.B().Replicaof().Host(newMaster.address).Port(newMaster.port).Build()).Error()
         if err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
@@ -609,17 +610,17 @@ func (n *node) close() <span class="cov8" title="1">{
 }
 
 type roleCache struct {
-        role       string
-        masterHost string
+        role   string
+        master *node
 
         expire time.Time
 }
 
 // Save the current role and masterHost to the cache.
 // Resets the cache expire time
-func (rc *roleCache) Save(role, masterHost string) <span class="cov8" title="1">{
+func (rc *roleCache) Save(role string, master *node) <span class="cov8" title="1">{
         rc.role = role
-        rc.masterHost = masterHost
+        rc.master = master
         rc.expire = time.Now().Add(time.Minute)
 }</span>
 
@@ -636,11 +637,11 @@ func (rc *roleCache) IsMaster() bool <span class="cov8" title="1">{
 }
 
 // Check if the current cache is a slave of the given master_host
-func (rc *roleCache) IsSlaveOf(masterHost string) bool <span class="cov8" title="1">{
-        if rc.isExpired() </span><span class="cov8" title="1">{
+func (rc *roleCache) IsSlaveOf(master *node) bool <span class="cov8" title="1">{
+        if rc.isExpired() || master == nil </span><span class="cov8" title="1">{
                 return false
         }</span>
-        <span class="cov8" title="1">return rc.role == slave &amp;&amp; rc.masterHost == masterHost</span>
+        <span class="cov8" title="1">return rc.role == slave &amp;&amp; rc.master != nil &amp;&amp; rc.master.address == master.address &amp;&amp; rc.master.port == master.port</span>
 }
 </pre>
 		
@@ -687,10 +688,22 @@ func extractPortFromAddress(address string, defaultPort int64) (string, int64) <
                 return address, defaultPort
         }</span>
         <span class="cov8" title="1">port, err := strconv.Atoi(portStr)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return address, defaultPort
         }</span>
         <span class="cov8" title="1">return host, int64(port)</span>
+}
+
+// Check if the given info string shows that the node is slave of the given node
+func infoSlaveOfNode(info string, n *node) bool <span class="cov8" title="1">{
+        if n == nil </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">currentRole := ParseValueFromInfo(info, role)
+        addr := ParseValueFromInfo(info, masterHost)
+        portStr := ParseValueFromInfo(info, masterPort)
+
+        return currentRole == slave &amp;&amp; addr == n.address &amp;&amp; portStr == strconv.FormatInt(n.port, 10)</span>
 }
 </pre>
 		
