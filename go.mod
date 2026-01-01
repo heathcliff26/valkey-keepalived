@@ -2,7 +2,7 @@ module github.com/heathcliff26/valkey-keepalived
 
 go 1.24.9
 
-toolchain go1.24.11
+toolchain go1.25.5
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
