@@ -3,12 +3,12 @@ package failoverclient
 import "fmt"
 
 type ValkeyConfig struct {
-	VirtualAddress string   `json:"virtualAddress"`
-	Port           int64    `json:"port,omitempty"`
-	Nodes          []string `json:"nodes"`
-	Username       string   `json:"username,omitempty"`
-	Password       string   `json:"password,omitempty"`
-	TLS            bool     `json:"tls,omitempty"`
+	VirtualAddress string   `yaml:"virtualAddress"`
+	Port           int64    `yaml:"port,omitempty"`
+	Nodes          []string `yaml:"nodes"`
+	Username       string   `yaml:"username,omitempty"`
+	Password       string   `yaml:"password,omitempty"`
+	TLS            bool     `yaml:"tls,omitempty"`
 }
 
 // Ensure that the given config is valid
