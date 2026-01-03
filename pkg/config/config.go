@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	failoverclient "github.com/heathcliff26/valkey-keepalived/pkg/failover-client"
-	"sigs.k8s.io/yaml"
+	"go.yaml.in/yaml/v3"
 )
 
 const (
@@ -30,8 +30,8 @@ func init() {
 }
 
 type Config struct {
-	LogLevel string                      `json:"logLevel,omitempty"`
-	Valkey   failoverclient.ValkeyConfig `json:"valkey"`
+	LogLevel string                      `yaml:"logLevel,omitempty"`
+	Valkey   failoverclient.ValkeyConfig `yaml:"valkey"`
 }
 
 // Returns a Config with default values set
