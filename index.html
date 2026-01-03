@@ -168,7 +168,7 @@ import (
         "strings"
 
         failoverclient "github.com/heathcliff26/valkey-keepalived/pkg/failover-client"
-        "sigs.k8s.io/yaml"
+        "go.yaml.in/yaml/v3"
 )
 
 const (
@@ -191,8 +191,8 @@ func init() <span class="cov8" title="1">{
 }</span>
 
 type Config struct {
-        LogLevel string                      `json:"logLevel,omitempty"`
-        Valkey   failoverclient.ValkeyConfig `json:"valkey"`
+        LogLevel string                      `yaml:"logLevel,omitempty"`
+        Valkey   failoverclient.ValkeyConfig `yaml:"valkey"`
 }
 
 // Returns a Config with default values set
@@ -444,12 +444,12 @@ func (c *FailoverClient) Close() <span class="cov8" title="1">{
 import "fmt"
 
 type ValkeyConfig struct {
-        VirtualAddress string   `json:"virtualAddress"`
-        Port           int64    `json:"port,omitempty"`
-        Nodes          []string `json:"nodes"`
-        Username       string   `json:"username,omitempty"`
-        Password       string   `json:"password,omitempty"`
-        TLS            bool     `json:"tls,omitempty"`
+        VirtualAddress string   `yaml:"virtualAddress"`
+        Port           int64    `yaml:"port,omitempty"`
+        Nodes          []string `yaml:"nodes"`
+        Username       string   `yaml:"username,omitempty"`
+        Password       string   `yaml:"password,omitempty"`
+        TLS            bool     `yaml:"tls,omitempty"`
 }
 
 // Ensure that the given config is valid
