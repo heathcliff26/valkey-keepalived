@@ -29,7 +29,7 @@ github.com/spf13/pflag
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
-# github.com/valkey-io/valkey-go v1.0.73
+# github.com/valkey-io/valkey-go v1.0.74
 ## explicit; go 1.24.9
 github.com/valkey-io/valkey-go
 github.com/valkey-io/valkey-go/internal/cmds
