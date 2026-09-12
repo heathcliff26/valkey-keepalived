@@ -55,19 +55,19 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/heathcliff26/valkey-keepalived/pkg/cmd/root.go (79.3%)</option>
+				<option value="file0">github.com/heathcliff26/valkey-keepalived/pkg/cmd/root.go (82.9%)</option>
 				
 				<option value="file1">github.com/heathcliff26/valkey-keepalived/pkg/config/config.go (100.0%)</option>
 				
-				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (91.3%)</option>
+				<option value="file2">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/client.go (93.8%)</option>
 				
 				<option value="file3">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/config.go (100.0%)</option>
 				
-				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (93.9%)</option>
+				<option value="file4">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/node.go (94.3%)</option>
 				
 				<option value="file5">github.com/heathcliff26/valkey-keepalived/pkg/failover-client/utils.go (100.0%)</option>
 				
-				<option value="file6">github.com/heathcliff26/valkey-keepalived/pkg/version/version.go (81.0%)</option>
+				<option value="file6">github.com/heathcliff26/valkey-keepalived/pkg/version/version.go (84.6%)</option>
 				
 				</select>
 			</div>
@@ -97,26 +97,26 @@ const (
         flagNameEnv    = "env"
 )
 
-func NewRootCommand() *cobra.Command <span class="cov8" title="1">{
-        cobra.AddTemplateFunc(
-                "ProgramName", func() string </span><span class="cov0" title="0">{
-                        return version.Name
-                }</span>,
+func NewRootCommand() *cobra.Command {
+        <span class="cov8" title="1">cobra.AddTemplateFunc(
+                "ProgramName", func() string </span>{
+                        <span class="cov0" title="0">return version.Name
+</span>                },
         )
 
         <span class="cov8" title="1">rootCmd := &amp;cobra.Command{
                 Use:   version.Name,
                 Short: version.Name + " failover a group of valkey databases based on a virtual ip",
-                RunE: func(cmd *cobra.Command, _ []string) error </span><span class="cov8" title="1">{
-                        cfg, err := cmd.Flags().GetString(flagNameConfig)
-                        if err != nil </span><span class="cov0" title="0">{
-                                return err
-                        }</span>
+                RunE: func(cmd *cobra.Command, _ []string) error </span>{
+                        <span class="cov8" title="1">cfg, err := cmd.Flags().GetString(flagNameConfig)
+                        if err != nil </span>{
+                                <span class="cov0" title="0">return err
+</span>                        }
 
                         <span class="cov8" title="1">env, err := cmd.Flags().GetBool(flagNameEnv)
-                        if err != nil </span><span class="cov0" title="0">{
-                                return err
-                        }</span>
+                        if err != nil </span>{
+                                <span class="cov0" title="0">return err
+</span>                        }
 
                         <span class="cov8" title="1">run(cmd, cfg, env)
                         return nil</span>
@@ -125,35 +125,35 @@ func NewRootCommand() *cobra.Command <span class="cov8" title="1">{
 
         <span class="cov8" title="1">rootCmd.Flags().StringP(flagNameConfig, "c", "", "Path to config file")
         err := rootCmd.MarkFlagFilename(flagNameConfig, "yaml", "yml")
-        if err != nil </span><span class="cov0" title="0">{
-                rootCmd.PrintErrln("Fatal: " + err.Error())
+        if err != nil </span>{
+                <span class="cov0" title="0">rootCmd.PrintErrln("Fatal: " + err.Error())
                 os.Exit(1)
-        }</span>
+</span>        }
 
         <span class="cov8" title="1">rootCmd.Flags().Bool(flagNameEnv, false, "Expand enviroment variables in config file")
-
-        rootCmd.AddCommand(
+</span>
+        <span class="cov8" title="1">rootCmd.AddCommand(
                 version.NewCommand(),
         )
-
-        return rootCmd</span>
+</span>
+        <span class="cov8" title="1">return rootCmd</span>
 }
 
-func Execute() <span class="cov8" title="1">{
-        cmd := NewRootCommand()
+func Execute() {
+        <span class="cov8" title="1">cmd := NewRootCommand()
         err := cmd.Execute()
-        if err != nil </span><span class="cov8" title="1">{
-                cmd.PrintErrln("Fatal: " + err.Error())
+        if err != nil </span>{
+                <span class="cov8" title="1">cmd.PrintErrln("Fatal: " + err.Error())
                 os.Exit(1)
-        }</span>
+</span>        }
 }
 
-func run(cmd *cobra.Command, configPath string, env bool) <span class="cov8" title="1">{
-        cfg, err := config.LoadConfig(configPath, env)
-        if err != nil </span><span class="cov8" title="1">{
-                cmd.PrintErrln("Fatal: " + err.Error())
+func run(cmd *cobra.Command, configPath string, env bool) {
+        <span class="cov8" title="1">cfg, err := config.LoadConfig(configPath, env)
+        if err != nil </span>{
+                <span class="cov8" title="1">cmd.PrintErrln("Fatal: " + err.Error())
                 os.Exit(1)
-        }</span>
+</span>        }
 
         <span class="cov0" title="0">failoverclient.NewFailoverClient(cfg.Valkey).Run()</span>
 }
@@ -181,14 +181,14 @@ const (
 var logLevel *slog.LevelVar
 
 // Initialize the logger
-func init() <span class="cov8" title="1">{
-        logLevel = &amp;slog.LevelVar{}
+func init() {
+        <span class="cov8" title="1">logLevel = &amp;slog.LevelVar{}
         opts := slog.HandlerOptions{
                 Level: logLevel,
-        }
-        logger := slog.New(slog.NewTextHandler(os.Stdout, &amp;opts))
+</span>        }
+        <span class="cov8" title="1">logger := slog.New(slog.NewTextHandler(os.Stdout, &amp;opts))
         slog.SetDefault(logger)
-}</span>
+</span>}
 
 type Config struct {
         LogLevel string                      `yaml:"logLevel,omitempty"`
@@ -196,68 +196,68 @@ type Config struct {
 }
 
 // Returns a Config with default values set
-func DefaultConfig() Config <span class="cov8" title="1">{
-        return Config{
+func DefaultConfig() Config {
+        <span class="cov8" title="1">return Config{
                 LogLevel: DEFAULT_LOG_LEVEL,
                 Valkey: failoverclient.ValkeyConfig{
                         Port: DEFAULT_PORT,
                 },
-        }
-}</span>
+</span>        }
+}
 
 // Loads config from file, returns error if config is invalid
 // Arguments:
 //
 //        path: Path to config file
 //        env: Determines if enviroment variables in the file will be expanded before decoding
-func LoadConfig(path string, env bool) (Config, error) <span class="cov8" title="1">{
-        c := DefaultConfig()
-
-        if path == "" </span><span class="cov8" title="1">{
-                path = DEFAULT_CONFIG_PATH
-        }</span>
+func LoadConfig(path string, env bool) (Config, error) {
+        <span class="cov8" title="1">c := DefaultConfig()
+</span>
+        <span class="cov8" title="1">if path == "" </span>{
+                <span class="cov8" title="1">path = DEFAULT_CONFIG_PATH
+</span>        }
 
         // #nosec G304: Local users can decide on the config file path freely.
         <span class="cov8" title="1">f, err := os.ReadFile(path)
-        if err != nil </span><span class="cov8" title="1">{
-                return Config{}, err
-        }</span>
+        if err != nil </span>{
+                <span class="cov8" title="1">return Config{}, err
+</span>        }
 
-        <span class="cov8" title="1">if env </span><span class="cov8" title="1">{
-                f = []byte(os.ExpandEnv(string(f)))
-        }</span>
+        <span class="cov8" title="1">if env </span>{
+                <span class="cov8" title="1">f = []byte(os.ExpandEnv(string(f)))
+</span>        }
 
         <span class="cov8" title="1">err = yaml.Unmarshal(f, &amp;c)
-        if err != nil </span><span class="cov8" title="1">{
-                return Config{}, err
-        }</span>
+        if err != nil </span>{
+                <span class="cov8" title="1">return Config{}, err
+</span>        }
 
         <span class="cov8" title="1">err = setLogLevel(c.LogLevel)
-        if err != nil </span><span class="cov8" title="1">{
-                return Config{}, err
-        }</span>
+        if err != nil </span>{
+                <span class="cov8" title="1">return Config{}, err
+</span>        }
 
         <span class="cov8" title="1">err = c.Valkey.Validate()
-        if err != nil </span><span class="cov8" title="1">{
-                return Config{}, err
-        }</span>
+        if err != nil </span>{
+                <span class="cov8" title="1">return Config{}, err
+</span>        }
 
         <span class="cov8" title="1">return c, nil</span>
 }
 
 // Parse a given string and set the resulting log level
-func setLogLevel(level string) error <span class="cov8" title="1">{
-        switch strings.ToLower(level) </span>{
-        case "debug":<span class="cov8" title="1">
-                logLevel.Set(slog.LevelDebug)</span>
-        case "info":<span class="cov8" title="1">
-                logLevel.Set(slog.LevelInfo)</span>
-        case "warn":<span class="cov8" title="1">
-                logLevel.Set(slog.LevelWarn)</span>
-        case "error":<span class="cov8" title="1">
-                logLevel.Set(slog.LevelError)</span>
-        default:<span class="cov8" title="1">
-                return fmt.Errorf("unkown log level \"%s\"", strings.ToLower(level))</span>
+func setLogLevel(level string) error {
+        <span class="cov8" title="1">switch strings.ToLower(level) </span>{
+        case "debug":
+                <span class="cov8" title="1">logLevel.Set(slog.LevelDebug)</span>
+        case "info":
+                <span class="cov8" title="1">logLevel.Set(slog.LevelInfo)</span>
+        case "warn":
+                <span class="cov8" title="1">logLevel.Set(slog.LevelWarn)</span>
+        case "error":
+                <span class="cov8" title="1">logLevel.Set(slog.LevelError)</span>
+        default:
+                <span class="cov8" title="1">return fmt.Errorf("unkown log level \"%s\"", strings.ToLower(level))</span>
         }
         <span class="cov8" title="1">return nil</span>
 }
@@ -290,30 +290,30 @@ type FailoverClient struct {
 }
 
 // Create a new failover client from the given configuration
-func NewFailoverClient(cfg ValkeyConfig) *FailoverClient <span class="cov8" title="1">{
-        option := valkey.ClientOption{
+func NewFailoverClient(cfg ValkeyConfig) *FailoverClient {
+        <span class="cov8" title="1">option := valkey.ClientOption{
                 Username:     cfg.Username,
                 Password:     cfg.Password,
                 DisableCache: true,
                 DisableRetry: true,
-        }
-        if cfg.TLS </span><span class="cov8" title="1">{
-                option.TLSConfig = &amp;tls.Config{
+</span>        }
+        <span class="cov8" title="1">if cfg.TLS </span>{
+                <span class="cov8" title="1">option.TLSConfig = &amp;tls.Config{
                         MinVersion: tls.VersionTLS12,
-                }
-        }</span>
+</span>                }
+        }
 
         <span class="cov8" title="1">nodes := make([]*node, len(cfg.Nodes))
-
-        for i, addr := range cfg.Nodes </span><span class="cov8" title="1">{
-                host, port := extractPortFromAddress(addr, cfg.Port)
+</span>
+        <span class="cov8" title="1">for i, addr := range cfg.Nodes </span>{
+                <span class="cov8" title="1">host, port := extractPortFromAddress(addr, cfg.Port)
                 nodes[i] = &amp;node{
                         address:   host,
                         port:      port,
                         up:        true,
                         roleCache: &amp;roleCache{},
-                }
-        }</span>
+</span>                }
+        }
 
         <span class="cov8" title="1">return &amp;FailoverClient{
                 clientOption:   option,
@@ -321,40 +321,40 @@ func NewFailoverClient(cfg ValkeyConfig) *FailoverClient <span class="cov8" titl
                 virtualAddress: cfg.VirtualAddress,
                 port:           cfg.Port,
                 quit:           make(chan os.Signal, 1),
-        }</span>
+</span>        }
 }
 
 // Run the given function on all nodes in parallel and wait
-func (c *FailoverClient) parallelJob(timeout time.Duration, f func(context.Context, *node)) <span class="cov8" title="1">{
-        var wg sync.WaitGroup
-
-        ctx, cancel := context.WithTimeout(context.Background(), timeout)
+func (c *FailoverClient) parallelJob(timeout time.Duration, f func(context.Context, *node)) {
+        <span class="cov8" title="1">var wg sync.WaitGroup
+</span>
+        <span class="cov8" title="1">ctx, cancel := context.WithTimeout(context.Background(), timeout)
         defer cancel()
-
-        for _, n := range c.nodes </span><span class="cov8" title="1">{
-                wg.Add(1)
-
-                go func() </span><span class="cov8" title="1">{
-                        defer wg.Done()
-
-                        f(ctx, n)
-                }</span>()
+</span>
+        <span class="cov8" title="1">for _, n := range c.nodes </span>{
+                <span class="cov8" title="1">wg.Add(1)
+</span>
+                <span class="cov8" title="1">go func() </span>{
+                        <span class="cov8" title="1">defer wg.Done()
+</span>
+                        <span class="cov8" title="1">f(ctx, n)
+</span>                }()
         }
 
         <span class="cov8" title="1">wg.Wait()</span>
 }
 
 // Check the current status of all nodes
-func (c *FailoverClient) updateNodes() <span class="cov8" title="1">{
-        c.parallelJob(time.Second, func(ctx context.Context, n *node) </span><span class="cov8" title="1">{
-                if n.client == nil </span><span class="cov8" title="1">{
-                        err := n.connect(ctx, c.clientOption)
-                        if err != nil </span><span class="cov8" title="1">{
-                                logLevel := slog.LevelDebug
-                                if n.up </span><span class="cov8" title="1">{
-                                        logLevel = slog.LevelWarn
+func (c *FailoverClient) updateNodes() {
+        <span class="cov8" title="1">c.parallelJob(time.Second, func(ctx context.Context, n *node) </span>{
+                <span class="cov8" title="1">if n.client == nil </span>{
+                        <span class="cov8" title="1">err := n.connect(ctx, c.clientOption)
+                        if err != nil </span>{
+                                <span class="cov8" title="1">logLevel := slog.LevelDebug
+                                if n.up </span>{
+                                        <span class="cov8" title="1">logLevel = slog.LevelWarn
                                         n.up = false
-                                }</span>
+</span>                                }
                                 <span class="cov8" title="1">slog.Log(ctx, logLevel, nodeDownMsg, slog.String("node", n.address), "err", err)</span>
                         }
                         <span class="cov8" title="1">return</span>
@@ -365,77 +365,77 @@ func (c *FailoverClient) updateNodes() <span class="cov8" title="1">{
 }
 
 // Continuosly check the current status and failover if necessary
-func (c *FailoverClient) Run() <span class="cov8" title="1">{
-        signal.Notify(c.quit, os.Interrupt, syscall.SIGTERM)
-
-        firstTime := true
-
-        slog.Info("Starting failover client")
-        for </span><span class="cov8" title="1">{
-                if !firstTime </span><span class="cov8" title="1">{
-                        select </span>{
-                        case &lt;-c.quit:<span class="cov8" title="1">
-                                slog.Info("Shutting down failover client")
+func (c *FailoverClient) Run() {
+        <span class="cov8" title="1">signal.Notify(c.quit, os.Interrupt, syscall.SIGTERM)
+</span>
+        <span class="cov8" title="1">firstTime := true
+</span>
+        <span class="cov8" title="1">slog.Info("Starting failover client")
+        for </span>{
+                <span class="cov8" title="1">if !firstTime </span>{
+                        <span class="cov8" title="1">select </span>{
+                        case &lt;-c.quit:
+                                <span class="cov8" title="1">slog.Info("Shutting down failover client")
                                 return</span>
                         case &lt;-time.After(time.Second):<span class="cov8" title="1"></span>
                         }
-                } else<span class="cov8" title="1"> {
-                        firstTime = false
-                }</span>
+                } else {
+                        <span class="cov8" title="1">firstTime = false
+</span>                }
 
                 <span class="cov8" title="1">c.updateNodes()
-
-                client, err := newValkeyClient(c.virtualAddress, c.port, c.clientOption)
-                if err != nil </span><span class="cov8" title="1">{
-                        slog.Error("Failed to connect to virtual address", slog.String("addr", c.virtualAddress), "err", err)
+</span>
+                <span class="cov8" title="1">client, err := newValkeyClient(c.virtualAddress, c.port, c.clientOption)
+                if err != nil </span>{
+                        <span class="cov8" title="1">slog.Error("Failed to connect to virtual address", slog.String("addr", c.virtualAddress), "err", err)
                         continue</span>
                 }
 
                 <span class="cov8" title="1">res, err := client.Do(context.Background(), client.B().Info().Section("server").Build()).ToString()
                 client.Close()
-                if err != nil </span><span class="cov0" title="0">{
-                        slog.Error("Failed to retrieve info from virtual address", slog.String("addr", c.virtualAddress), "err", err)
+                if err != nil </span>{
+                        <span class="cov0" title="0">slog.Error("Failed to retrieve info from virtual address", slog.String("addr", c.virtualAddress), "err", err)
                         continue</span>
                 }
                 <span class="cov8" title="1">currentMaster := ParseValueFromInfo(res, runID)
-                if currentMaster != c.currentMaster </span><span class="cov8" title="1">{
-                        found := false
-                        for _, n := range c.nodes </span><span class="cov8" title="1">{
-                                if n.runID == currentMaster </span><span class="cov8" title="1">{
-                                        c.currentMaster = currentMaster
+                if currentMaster != c.currentMaster </span>{
+                        <span class="cov8" title="1">found := false
+                        for _, n := range c.nodes </span>{
+                                <span class="cov8" title="1">if n.runID == currentMaster </span>{
+                                        <span class="cov8" title="1">c.currentMaster = currentMaster
                                         c.masterNode = n
                                         found = true
-                                }</span>
+</span>                                }
                         }
-                        <span class="cov8" title="1">if !found </span><span class="cov0" title="0">{
-                                slog.Error("Could not find the current masters addr", slog.String(runID, currentMaster))
+                        <span class="cov8" title="1">if !found </span>{
+                                <span class="cov0" title="0">slog.Error("Could not find the current masters addr", slog.String(runID, currentMaster))
                                 continue</span>
-                        } else<span class="cov8" title="1"> {
-                                slog.Info("Switching over to new master", slog.String("addr", c.masterNode.address), slog.Int64("port", c.masterNode.port), slog.String(runID, c.currentMaster))
-                        }</span>
+                        } else {
+                                <span class="cov8" title="1">slog.Info("Switching over to new master", slog.String("addr", c.masterNode.address), slog.Int64("port", c.masterNode.port), slog.String(runID, c.currentMaster))
+</span>                        }
                 }
 
-                <span class="cov8" title="1">c.parallelJob(time.Second, func(ctx context.Context, n *node) </span><span class="cov8" title="1">{
-                        if n.runID == c.currentMaster </span><span class="cov8" title="1">{
-                                err := n.master(ctx)
-                                if err != nil </span><span class="cov0" title="0">{
-                                        slog.Error("Failed to update node to master", slog.String("node", n.address), "err", err)
-                                }</span>
-                        } else<span class="cov8" title="1"> {
-                                err := n.slave(ctx, c.masterNode)
-                                if err != nil </span><span class="cov0" title="0">{
-                                        slog.Error("Failed to update node to slave", slog.String("node", n.address), "err", err)
-                                }</span>
+                <span class="cov8" title="1">c.parallelJob(time.Second, func(ctx context.Context, n *node) </span>{
+                        <span class="cov8" title="1">if n.runID == c.currentMaster </span>{
+                                <span class="cov8" title="1">err := n.master(ctx)
+                                if err != nil </span>{
+                                        <span class="cov0" title="0">slog.Error("Failed to update node to master", slog.String("node", n.address), "err", err)
+</span>                                }
+                        } else {
+                                <span class="cov8" title="1">err := n.slave(ctx, c.masterNode)
+                                if err != nil </span>{
+                                        <span class="cov0" title="0">slog.Error("Failed to update node to slave", slog.String("node", n.address), "err", err)
+</span>                                }
                         }
                 })
         }
 }
 
 // Close all open client connections
-func (c *FailoverClient) Close() <span class="cov8" title="1">{
-        for _, n := range c.nodes </span><span class="cov8" title="1">{
-                n.close()
-        }</span>
+func (c *FailoverClient) Close() {
+        <span class="cov8" title="1">for _, n := range c.nodes </span>{
+                <span class="cov8" title="1">n.close()
+</span>        }
 }
 </pre>
 		
@@ -453,16 +453,16 @@ type ValkeyConfig struct {
 }
 
 // Ensure that the given config is valid
-func (c ValkeyConfig) Validate() error <span class="cov8" title="1">{
-        if c.VirtualAddress == "" </span><span class="cov8" title="1">{
-                return fmt.Errorf("missing virtual address")
-        }</span>
-        <span class="cov8" title="1">if c.Port &lt; 0 || c.Port &gt; 65535 </span><span class="cov8" title="1">{
-                return fmt.Errorf("invalid port, needs to be between 0-65535")
-        }</span>
-        <span class="cov8" title="1">if len(c.Nodes) &lt; 1 </span><span class="cov8" title="1">{
-                return fmt.Errorf("need to have at least 1 node listed")
-        }</span>
+func (c ValkeyConfig) Validate() error {
+        <span class="cov8" title="1">if c.VirtualAddress == "" </span>{
+                <span class="cov8" title="1">return fmt.Errorf("missing virtual address")
+</span>        }
+        <span class="cov8" title="1">if c.Port &lt; 0 || c.Port &gt; 65535 </span>{
+                <span class="cov8" title="1">return fmt.Errorf("invalid port, needs to be between 0-65535")
+</span>        }
+        <span class="cov8" title="1">if len(c.Nodes) &lt; 1 </span>{
+                <span class="cov8" title="1">return fmt.Errorf("need to have at least 1 node listed")
+</span>        }
 
         <span class="cov8" title="1">return nil</span>
 }
@@ -506,107 +506,107 @@ const (
 )
 
 // Connect to valkey and retrieve the run_id
-func (n *node) connect(ctx context.Context, option valkey.ClientOption) error <span class="cov8" title="1">{
-        client, err := newValkeyClient(n.address, n.port, option)
-        if err != nil </span><span class="cov8" title="1">{
-                return err
-        }</span>
+func (n *node) connect(ctx context.Context, option valkey.ClientOption) error {
+        <span class="cov8" title="1">client, err := newValkeyClient(n.address, n.port, option)
+        if err != nil </span>{
+                <span class="cov8" title="1">return err
+</span>        }
 
         <span class="cov8" title="1">res, err := client.Do(ctx, client.B().Info().Section("server").Build()).ToString()
-        if err != nil </span><span class="cov8" title="1">{
-                client.Close()
+        if err != nil </span>{
+                <span class="cov8" title="1">client.Close()
                 return err
-        }</span>
+</span>        }
 
         <span class="cov8" title="1">n.runID = ParseValueFromInfo(res, runID)
         n.client = client
         n.up = true
-
-        return nil</span>
+</span>
+        <span class="cov8" title="1">return nil</span>
 }
 
 // Check that the node is up.
 // Requires client to be present.
-func (n *node) ping(ctx context.Context) <span class="cov8" title="1">{
-        res, err := n.client.Do(ctx, n.client.B().Ping().Build()).ToString()
-        if err != nil || res != "PONG" </span><span class="cov8" title="1">{
-                if n.up </span><span class="cov8" title="1">{
-                        slog.Info(nodeDownMsg, slog.String("node", n.address), "err", err, slog.String("res", res))
+func (n *node) ping(ctx context.Context) {
+        <span class="cov8" title="1">res, err := n.client.Do(ctx, n.client.B().Ping().Build()).ToString()
+        if err != nil || res != "PONG" </span>{
+                <span class="cov8" title="1">if n.up </span>{
+                        <span class="cov8" title="1">slog.Info(nodeDownMsg, slog.String("node", n.address), "err", err, slog.String("res", res))
                         n.up = false
-                }</span>
+</span>                }
                 <span class="cov8" title="1">n.client.Close()
                 n.client = nil</span>
-        } else<span class="cov8" title="1"> if !n.up </span><span class="cov8" title="1">{
-                n.up = true
+        } else <span class="cov8" title="1">if !n.up </span>{
+                <span class="cov8" title="1">n.up = true
                 slog.Info(nodeUpMsg, slog.String("node", n.address))
-        }</span>
+</span>        }
 }
 
 // Make this node a master node
-func (n *node) master(ctx context.Context) error <span class="cov8" title="1">{
-        if n.client == nil </span><span class="cov8" title="1">{
-                return fmt.Errorf("node is not up")
-        }</span>
-        <span class="cov8" title="1">if n.roleCache.IsMaster() </span><span class="cov8" title="1">{
-                return nil
-        }</span>
+func (n *node) master(ctx context.Context) error {
+        <span class="cov8" title="1">if n.client == nil </span>{
+                <span class="cov8" title="1">return fmt.Errorf("node is not up")
+</span>        }
+        <span class="cov8" title="1">if n.roleCache.IsMaster() </span>{
+                <span class="cov8" title="1">return nil
+</span>        }
 
         <span class="cov8" title="1">info, err := n.getReplicationInfo(ctx)
-        if err != nil </span><span class="cov8" title="1">{
-                return err
-        }</span>
-        <span class="cov8" title="1">if ParseValueFromInfo(info, role) == master </span><span class="cov8" title="1">{
-                n.roleCache.Save(master, nil)
+        if err != nil </span>{
+                <span class="cov8" title="1">return err
+</span>        }
+        <span class="cov8" title="1">if ParseValueFromInfo(info, role) == master </span>{
+                <span class="cov8" title="1">n.roleCache.Save(master, nil)
                 return nil
-        }</span>
+</span>        }
 
         <span class="cov8" title="1">err = n.client.Do(ctx, n.client.B().Replicaof().No().One().Build()).Error()
-        if err != nil </span><span class="cov0" title="0">{
-                return err
-        }</span>
+        if err != nil </span>{
+                <span class="cov0" title="0">return err
+</span>        }
         <span class="cov8" title="1">n.roleCache.Save(master, nil)
         return nil</span>
 }
 
 // Make this node a slave of the given master
-func (n *node) slave(ctx context.Context, newMaster *node) error <span class="cov8" title="1">{
-        if n.client == nil </span><span class="cov8" title="1">{
-                slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
+func (n *node) slave(ctx context.Context, newMaster *node) error {
+        <span class="cov8" title="1">if n.client == nil </span>{
+                <span class="cov8" title="1">slog.Debug("Node is not up, skipping for update", slog.String("node", n.address))
                 return nil
-        }</span>
+</span>        }
 
-        <span class="cov8" title="1">if n.roleCache.IsSlaveOf(newMaster) </span><span class="cov8" title="1">{
-                return nil
-        }</span>
+        <span class="cov8" title="1">if n.roleCache.IsSlaveOf(newMaster) </span>{
+                <span class="cov8" title="1">return nil
+</span>        }
 
         <span class="cov8" title="1">info, err := n.getReplicationInfo(ctx)
-        if err != nil </span><span class="cov8" title="1">{
-                return err
-        }</span>
-        <span class="cov8" title="1">if infoSlaveOfNode(info, newMaster) </span><span class="cov0" title="0">{
-                n.roleCache.Save(slave, newMaster)
+        if err != nil </span>{
+                <span class="cov8" title="1">return err
+</span>        }
+        <span class="cov8" title="1">if infoSlaveOfNode(info, newMaster) </span>{
+                <span class="cov0" title="0">n.roleCache.Save(slave, newMaster)
                 return nil
-        }</span>
+</span>        }
 
         <span class="cov8" title="1">err = n.client.Do(ctx, n.client.B().Replicaof().Host(newMaster.address).Port(newMaster.port).Build()).Error()
-        if err != nil </span><span class="cov0" title="0">{
-                return err
-        }</span>
+        if err != nil </span>{
+                <span class="cov0" title="0">return err
+</span>        }
         <span class="cov8" title="1">n.roleCache.Save(slave, newMaster)
         return nil</span>
 }
 
 // Fetch the replication information from valkey
-func (n *node) getReplicationInfo(ctx context.Context) (string, error) <span class="cov8" title="1">{
-        return n.client.Do(ctx, n.client.B().Info().Section("replication").Build()).ToString()
-}</span>
+func (n *node) getReplicationInfo(ctx context.Context) (string, error) {
+        <span class="cov8" title="1">return n.client.Do(ctx, n.client.B().Info().Section("replication").Build()).ToString()
+</span>}
 
 // Close the open client
-func (n *node) close() <span class="cov8" title="1">{
-        if n.client != nil </span><span class="cov8" title="1">{
-                n.client.Close()
+func (n *node) close() {
+        <span class="cov8" title="1">if n.client != nil </span>{
+                <span class="cov8" title="1">n.client.Close()
                 n.client = nil
-        }</span>
+</span>        }
 }
 
 type roleCache struct {
@@ -618,29 +618,29 @@ type roleCache struct {
 
 // Save the current role and masterHost to the cache.
 // Resets the cache expire time
-func (rc *roleCache) Save(role string, master *node) <span class="cov8" title="1">{
-        rc.role = role
+func (rc *roleCache) Save(role string, master *node) {
+        <span class="cov8" title="1">rc.role = role
         rc.master = master
         rc.expire = time.Now().Add(time.Minute)
-}</span>
+</span>}
 
-func (rc *roleCache) isExpired() bool <span class="cov8" title="1">{
-        return time.Now().After(rc.expire)
-}</span>
+func (rc *roleCache) isExpired() bool {
+        <span class="cov8" title="1">return time.Now().After(rc.expire)
+</span>}
 
 // Check if the current cache is a master
-func (rc *roleCache) IsMaster() bool <span class="cov8" title="1">{
-        if rc.isExpired() </span><span class="cov8" title="1">{
-                return false
-        }</span>
+func (rc *roleCache) IsMaster() bool {
+        <span class="cov8" title="1">if rc.isExpired() </span>{
+                <span class="cov8" title="1">return false
+</span>        }
         <span class="cov8" title="1">return rc.role == master</span>
 }
 
 // Check if the current cache is a slave of the given master_host
-func (rc *roleCache) IsSlaveOf(master *node) bool <span class="cov8" title="1">{
-        if rc.isExpired() || master == nil </span><span class="cov8" title="1">{
-                return false
-        }</span>
+func (rc *roleCache) IsSlaveOf(master *node) bool {
+        <span class="cov8" title="1">if rc.isExpired() || master == nil </span>{
+                <span class="cov8" title="1">return false
+</span>        }
         <span class="cov8" title="1">return rc.role == slave &amp;&amp; rc.master != nil &amp;&amp; rc.master.address == master.address &amp;&amp; rc.master.port == master.port</span>
 }
 </pre>
@@ -657,23 +657,23 @@ import (
         "github.com/valkey-io/valkey-go"
 )
 
-func newValkeyClient(addr string, port int64, option valkey.ClientOption) (valkey.Client, error) <span class="cov8" title="1">{
-        option.InitAddress = []string{fmt.Sprintf("%s:%d", addr, port)}
+func newValkeyClient(addr string, port int64, option valkey.ClientOption) (valkey.Client, error) {
+        <span class="cov8" title="1">option.InitAddress = []string{fmt.Sprintf("%s:%d", addr, port)}
         return valkey.NewClient(option)
-}</span>
+</span>}
 
 // Takes a given info result from valkey and extracts the wanted value
-func ParseValueFromInfo(info string, key string) string <span class="cov8" title="1">{
-        fields := strings.Split(info, "\r\n")
-
-        for _, field := range fields </span><span class="cov8" title="1">{
-                keyval := strings.SplitN(field, ":", 2)
-                if len(keyval) != 2 </span><span class="cov8" title="1">{
-                        continue</span>
+func ParseValueFromInfo(info string, key string) string {
+        <span class="cov8" title="1">fields := strings.Split(info, "\r\n")
+</span>
+        <span class="cov8" title="1">for _, field := range fields </span>{
+                <span class="cov8" title="1">keyval := strings.SplitN(field, ":", 2)
+                if len(keyval) != 2 </span>{
+                        <span class="cov8" title="1">continue</span>
                 }
-                <span class="cov8" title="1">if keyval[0] == key </span><span class="cov8" title="1">{
-                        return keyval[1]
-                }</span>
+                <span class="cov8" title="1">if keyval[0] == key </span>{
+                        <span class="cov8" title="1">return keyval[1]
+</span>                }
         }
 
         <span class="cov8" title="1">slog.Error("Could not find the requested key in info", "info", info, "key", key)
@@ -682,28 +682,28 @@ func ParseValueFromInfo(info string, key string) string <span class="cov8" title
 
 // Extract the host and port from an address string.
 // Returns default port if no port is found.
-func extractPortFromAddress(address string, defaultPort int64) (string, int64) <span class="cov8" title="1">{
-        host, portStr, err := net.SplitHostPort(address)
-        if err != nil </span><span class="cov8" title="1">{
-                return address, defaultPort
-        }</span>
+func extractPortFromAddress(address string, defaultPort int64) (string, int64) {
+        <span class="cov8" title="1">host, portStr, err := net.SplitHostPort(address)
+        if err != nil </span>{
+                <span class="cov8" title="1">return address, defaultPort
+</span>        }
         <span class="cov8" title="1">port, err := strconv.Atoi(portStr)
-        if err != nil </span><span class="cov8" title="1">{
-                return address, defaultPort
-        }</span>
+        if err != nil </span>{
+                <span class="cov8" title="1">return address, defaultPort
+</span>        }
         <span class="cov8" title="1">return host, int64(port)</span>
 }
 
 // Check if the given info string shows that the node is slave of the given node
-func infoSlaveOfNode(info string, n *node) bool <span class="cov8" title="1">{
-        if n == nil </span><span class="cov8" title="1">{
-                return false
-        }</span>
+func infoSlaveOfNode(info string, n *node) bool {
+        <span class="cov8" title="1">if n == nil </span>{
+                <span class="cov8" title="1">return false
+</span>        }
         <span class="cov8" title="1">currentRole := ParseValueFromInfo(info, role)
         addr := ParseValueFromInfo(info, masterHost)
         portStr := ParseValueFromInfo(info, masterPort)
-
-        return currentRole == slave &amp;&amp; addr == n.address &amp;&amp; portStr == strconv.FormatInt(n.port, 10)</span>
+</span>
+        <span class="cov8" title="1">return currentRole == slave &amp;&amp; addr == n.address &amp;&amp; portStr == strconv.FormatInt(n.port, 10)</span>
 }
 </pre>
 		
@@ -719,48 +719,48 @@ import (
 const Name = "valkey-keepalived"
 
 // Create a new version command with the given app name
-func NewCommand() *cobra.Command <span class="cov8" title="1">{
-        cmd := &amp;cobra.Command{
+func NewCommand() *cobra.Command {
+        <span class="cov8" title="1">cmd := &amp;cobra.Command{
                 Use:   "version",
                 Short: "Print version information and exit",
-                Run: func(cmd *cobra.Command, args []string) </span><span class="cov0" title="0">{
-                        cmd.Print(VersionInfoString())
-                }</span>,
+                Run: func(cmd *cobra.Command, args []string) </span>{
+                        <span class="cov0" title="0">cmd.Print(VersionInfoString())
+</span>                },
         }
         // Override to prevent parent function from running
-        <span class="cov8" title="1">cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) </span>{<span class="cov0" title="0">}</span>
+        <span class="cov8" title="1">cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) </span>{<span class="cov0" title="0"></span>}
 
         <span class="cov8" title="1">return cmd</span>
 }
 
 // Return the version string
-func Version() string <span class="cov8" title="1">{
-        buildinfo, _ := debug.ReadBuildInfo()
+func Version() string {
+        <span class="cov8" title="1">buildinfo, _ := debug.ReadBuildInfo()
         return buildinfo.Main.Version
-}</span>
+</span>}
 
 // Return a formated string containing the version, git commit and go version the app was compiled with.
-func VersionInfoString() string <span class="cov8" title="1">{
-        var commit string
+func VersionInfoString() string {
+        <span class="cov8" title="1">var commit string
         buildinfo, _ := debug.ReadBuildInfo()
-        for _, item := range buildinfo.Settings </span><span class="cov8" title="1">{
-                if item.Key == "vcs.revision" </span><span class="cov0" title="0">{
-                        commit = item.Value
+        for _, item := range buildinfo.Settings </span>{
+                <span class="cov8" title="1">if item.Key == "vcs.revision" </span>{
+                        <span class="cov0" title="0">commit = item.Value
                         break</span>
                 }
         }
-        <span class="cov8" title="1">if len(commit) &gt; 7 </span><span class="cov0" title="0">{
-                commit = commit[:7]
-        }</span> else<span class="cov8" title="1"> if commit == "" </span><span class="cov8" title="1">{
-                commit = "Unknown"
-        }</span>
+        <span class="cov8" title="1">if len(commit) &gt; 7 </span>{
+                <span class="cov0" title="0">commit = commit[:7]
+</span>        } else <span class="cov8" title="1">if commit == "" </span>{
+                <span class="cov8" title="1">commit = "Unknown"
+</span>        }
 
         <span class="cov8" title="1">result := Name + ":\n"
         result += "    Version: " + buildinfo.Main.Version + "\n"
         result += "    Commit:  " + commit + "\n"
         result += "    Go:      " + runtime.Version() + "\n"
-
-        return result</span>
+</span>
+        <span class="cov8" title="1">return result</span>
 }
 </pre>
 		
