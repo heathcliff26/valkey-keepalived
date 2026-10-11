@@ -1,4 +1,4 @@
-# github.com/alicebob/miniredis/v2 v2.39.0
+# github.com/alicebob/miniredis/v2 v2.40.0
 ## explicit; go 1.17
 github.com/alicebob/miniredis/v2
 github.com/alicebob/miniredis/v2/fpconv
@@ -25,7 +25,7 @@ github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/internal/difflib
 github.com/stretchr/testify/internal/spew
 github.com/stretchr/testify/require
-# github.com/valkey-io/valkey-go v1.0.77
+# github.com/valkey-io/valkey-go v1.0.78
 ## explicit; go 1.25.0
 github.com/valkey-io/valkey-go
 github.com/valkey-io/valkey-go/internal/cmds
